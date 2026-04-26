@@ -3,7 +3,7 @@
 return [
     'paths' => ['api/*', 'api-login', 'auto-logout'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['http://localhost:3000', 'http://localhost'],
+    'allowed_origins' => array_filter([env('FRONTEND_URL', 'http://localhost:3000'), 'http://localhost']),
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],

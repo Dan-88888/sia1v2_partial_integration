@@ -160,6 +160,6 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('http://localhost:3000');
+        return redirect(env('FRONTEND_URL', 'http://localhost:3000'));
     }
 }

@@ -9,8 +9,9 @@ import {
 } from "react-icons/hi";
 import logo from "../../assets/logo.png";
 
-const REGISTRATION_URL = "http://localhost/registration_system/public";
-const SCHEDULING_URL   = "http://localhost/scheduling_system";
+const REGISTRATION_URL = process.env.REACT_APP_REGISTRATION_URL || "http://localhost/registration_system/public";
+const SCHEDULING_URL   = process.env.REACT_APP_SCHEDULING_URL   || "http://localhost/scheduling_system";
+const ADMISSION_URL    = process.env.REACT_APP_ADMISSION_URL    || "http://localhost/admission_system/public";
 
 /* ─── reusable primary button ─────────────────────────────────────── */
 function PrimaryBtn({ label, onClick, rightEl }) {
@@ -110,7 +111,7 @@ export default function RoleSelection() {
 
   useEffect(() => {
     fetch(`${REGISTRATION_URL}/auto-logout`, { credentials: "include" }).catch(() => {});
-    fetch("http://localhost/admission_system/public/auto-logout", { credentials: "include" }).catch(() => {});
+    fetch(`${ADMISSION_URL}/auto-logout`, { credentials: "include" }).catch(() => {});
   }, []);
 
   return (

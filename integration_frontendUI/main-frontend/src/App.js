@@ -12,8 +12,8 @@ import RoleSelection from "./pages/auth/RoleSelection";
 import PortalFrame from "./pages/PortalFrame";
 import "./App.css";
 
-const ADMISSION_URL = "http://localhost/admission_system/public";
-const REGISTRATION_URL = "http://localhost/registration_system/public";
+const ADMISSION_URL = process.env.REACT_APP_ADMISSION_URL || "http://localhost/admission_system/public";
+const REGISTRATION_URL = process.env.REACT_APP_REGISTRATION_URL || "http://localhost/registration_system/public";
 
 function AppShell() {
   return (
