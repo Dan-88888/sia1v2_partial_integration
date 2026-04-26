@@ -36,7 +36,14 @@ Route::get('/api/courses', [App\Http\Controllers\CourseController::class, 'getCo
 // Authentication routes
 Route::get('login', function() { return redirect('/'); })->name('login');
 Route::post('login', [LoginController::class, 'login']);
+Route::post('api-login', [LoginController::class, 'apiLogin']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('auto-logout', function (\Illuminate\Http\Request $request) {
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return response()->json(['ok' => true]);
+});
 
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('register', [RegisterController::class, 'register']);

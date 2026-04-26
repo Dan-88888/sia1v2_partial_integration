@@ -12,7 +12,12 @@ class CourseController extends Controller
      */
     public function getCampuses()
     {
-        $campuses = Course::select('campus')->distinct()->orderBy('campus')->pluck('campus');
+        $campuses = Course::select('campus')
+            ->whereNotNull('campus')
+            ->where('campus', '!=', '')
+            ->distinct()
+            ->orderBy('campus')
+            ->pluck('campus');
         return response()->json($campuses);
     }
 

@@ -44,6 +44,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 });
 
+// Auto-logout endpoint called from the React landing page on refresh
+Route::get('/auto-logout', function (\Illuminate\Http\Request $request) {
+    \Illuminate\Support\Facades\Auth::guard('admin')->logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return response()->json(['ok' => true])
+        ->header('Access-Control-Allow-Origin', 'http://localhost:3000')
+        ->header('Access-Control-Allow-Credentials', 'true');
+});
+
 // Student track application routes
 Route::get('/student/track', [StudentController::class, 'showTrackPage'])->name('student.track');
 Route::get('/student/lookup', [StudentController::class, 'lookupApplication'])->name('student.lookup');

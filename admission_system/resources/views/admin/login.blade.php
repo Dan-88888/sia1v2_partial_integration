@@ -171,7 +171,7 @@
                         <p class="text-xs text-blue-700 text-center">
                             <span class="font-bold">Demo Credentials:</span><br>
                             Email: admin@university.edu<br>
-                            Password: password123
+                            Password: Admin@PSU2024
                         </p>
                     </div>
                 </div>

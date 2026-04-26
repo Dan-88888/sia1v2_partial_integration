@@ -3,5 +3,5 @@ session_start();
 session_unset();
 session_destroy();
 
-header("Location: role_selection.html?logout=1");
+header("Location: http://localhost:3000");
 exit;

@@ -38,7 +38,7 @@ class AdminController extends Controller
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+        return redirect('http://localhost:3000');
     }
 
     public function dashboard()

@@ -116,11 +116,50 @@ class LoginController extends Controller
         return redirect()->route('dashboard');
     }
 
+    public function apiLogin(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        $application = \App\Models\Application::where('email', $credentials['email'])->first();
+
+        if ($application && $application->status === 'Pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your application is still pending review. Access will be granted once approved.',
+            ], 403);
+        }
+
+        if (!$application && !\App\Models\User::where('email', $credentials['email'])->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No record found for this email. Please submit an application first.',
+            ], 403);
+        }
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            $user = Auth::user();
+            return response()->json([
+                'success' => true,
+                'role' => $user->role,
+                'name' => $user->name,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid email or password.',
+        ], 401);
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+        return redirect('http://localhost:3000');
     }
 }

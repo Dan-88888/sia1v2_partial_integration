@@ -80,6 +80,37 @@
           <i class="fas fa-search me-1"></i> Track Application Status
         </button>
 
+        {{-- Demo Credentials Hint --}}
+        @if(!$filteredRole || $filteredRole === 'admin')
+        <div style="margin-top:16px; padding:12px 16px; background:#f0f4ff; border:1px solid #c7d2fe; border-radius:10px; text-align:center;">
+          <p style="font-size:0.78rem; color:#3730a3; margin:0; line-height:1.7;">
+            <strong>Demo Credentials (Admin)</strong><br>
+            Email: <code style="background:#e0e7ff; padding:1px 5px; border-radius:4px;">admin@university.com</code><br>
+            Password: <code style="background:#e0e7ff; padding:1px 5px; border-radius:4px;">admin123</code>
+          </p>
+        </div>
+        @endif
+
+        @if(!$filteredRole || $filteredRole === 'teacher')
+        <div style="margin-top:16px; padding:12px 16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; text-align:center;">
+          <p style="font-size:0.78rem; color:#166534; margin:0; line-height:1.7;">
+            <strong>Demo Credentials (Teacher)</strong><br>
+            Email: <code style="background:#dcfce7; padding:1px 5px; border-radius:4px;">teacher@university.com</code><br>
+            Password: <code style="background:#dcfce7; padding:1px 5px; border-radius:4px;">teacher123</code>
+          </p>
+        </div>
+        @endif
+
+        @if($filteredRole === 'student')
+        <div style="margin-top:16px; padding:12px 16px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; text-align:center;">
+          <p style="font-size:0.78rem; color:#92400e; margin:0; line-height:1.7;">
+            <i class="fas fa-info-circle"></i>
+            <strong> New here?</strong><br>
+            Click <strong>"Apply as New Student"</strong> below to register.<br>
+            Your login credentials will be provided upon approval.
+          </p>
+        </div>
+        @endif
 
       </div>
     </div>
@@ -340,7 +371,7 @@
 
     // --- Dynamic Course Selection ---
     async function loadCampuses() {
-      const res = await fetch('/api/campuses');
+      const res = await fetch('{{ url("/api/campuses") }}');
       const campuses = await res.json();
       const selects = ['studentCampus', 'teacherCampus'];
       selects.forEach(sId => {
@@ -367,7 +398,7 @@
 
       if (!campus) return;
 
-      const res = await fetch(`/api/colleges?campus=${encodeURIComponent(campus)}`);
+      const res = await fetch(`{{ url("/api/colleges") }}?campus=${encodeURIComponent(campus)}`);
       const colleges = await res.json();
       colleges.forEach(c => {
         const opt = document.createElement('option');
@@ -394,7 +425,7 @@
       if (!campus || !college) return;
 
       try {
-        const res = await fetch(`/api/courses?campus=${encodeURIComponent(campus)}&college=${encodeURIComponent(college)}`);
+        const res = await fetch(`{{ url("/api/courses") }}?campus=${encodeURIComponent(campus)}&college=${encodeURIComponent(college)}`);
         allCourses = await res.json();
         renderCourseResults(allCourses);
       } catch (err) {
@@ -459,7 +490,7 @@
         });
         return;
       }
-      submitApp('studentAppForm', "/applications/submit?type=student"); 
+      submitApp('studentAppForm', "{{ url('/applications/submit') }}?type=student");
     }
     
     function submitTeacherApp() { 
@@ -473,7 +504,7 @@
         });
         return;
       }
-      submitApp('teacherAppForm', "/applications/submit?type=teacher"); 
+      submitApp('teacherAppForm', "{{ url('/applications/submit') }}?type=teacher");
     }
   </script>
 </body>
