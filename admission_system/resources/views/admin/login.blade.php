@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSU - Admin Login</title>
+    <title>{{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .psu-blue-bg {
@@ -158,7 +158,7 @@
                 
                 <div class="mt-8 pt-6 border-t border-gray-200">
                     <div class="text-center">
-                        <a href="{{ route('home') }}" class="text-sm text-gray-600 hover:text-[#000035] transition flex items-center justify-center">
+                        <a href="#" onclick="window.parent.postMessage({action:'navigate-home'}, '*'); return false;" class="text-sm text-gray-600 hover:text-[#000035] transition flex items-center justify-center">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                             </svg>
@@ -166,7 +166,7 @@
                         </a>
                     </div>
                     
-                    <!-- Default Credentials Hint (remove in production) -->
+                    @if(config('app.debug'))
                     <div class="mt-4 p-3 bg-blue-50 rounded-lg">
                         <p class="text-xs text-blue-700 text-center">
                             <span class="font-bold">Demo Credentials:</span><br>
@@ -174,6 +174,7 @@
                             Password: Admin@PSU2024
                         </p>
                     </div>
+                    @endif
                 </div>
             </div>
         </div>

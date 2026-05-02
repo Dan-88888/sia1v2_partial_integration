@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Subject extends Model
 {
+    protected $table = 'reg_subjects';
+
     protected $fillable = [
         'course_id', 'subject_code', 'subject_name', 'units', 'description'
     ];
@@ -24,13 +26,13 @@ class Subject extends Model
 
     public function prerequisites()
     {
-        return $this->belongsToMany(Subject::class, 'subject_prerequisites', 'subject_id', 'prerequisite_id')
+        return $this->belongsToMany(Subject::class, 'reg_subject_prerequisites', 'subject_id', 'prerequisite_id')
                     ->withTimestamps();
     }
 
     public function prerequisite_of()
     {
-        return $this->belongsToMany(Subject::class, 'subject_prerequisites', 'prerequisite_id', 'subject_id')
+        return $this->belongsToMany(Subject::class, 'reg_subject_prerequisites', 'prerequisite_id', 'subject_id')
                     ->withTimestamps();
     }
 

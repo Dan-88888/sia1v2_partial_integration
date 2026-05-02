@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="University Registration System — Seamless enrollment, scheduling, and academic management">
-    <title>{{ $app_settings['school_name'] ?? config('app.name') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('images/nobgParsulogo.png') }}">
+    <title>@yield('title', config('app.name'))</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/PSU.png') }}">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -1265,10 +1265,10 @@
     @elseif(Auth::user()->role === 'teacher')
         <div class="sidebar-section">
             <div class="sidebar-label">Main Menu</div>
-            <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('teacher.dashboard') }}" class="sidebar-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}">
                 <i class="fas fa-th-large"></i> Dashboard
             </a>
-            <a href="{{ route('teacher.dashboard') }}" class="sidebar-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('teacher.teaching_load') }}" class="sidebar-link {{ request()->routeIs('teacher.teaching_load') ? 'active' : '' }}">
                 <i class="fas fa-chalkboard-teacher"></i> Teaching Load
             </a>
             <a href="{{ route('departments.index') }}" class="sidebar-link {{ request()->routeIs('departments.index') ? 'active' : '' }}">

@@ -656,3 +656,6 @@ body {
   }
 }
 
+
+/* Ensure SweetAlert2 always appears above all overlays */
+.swal2-container { z-index: 99999 !important; }

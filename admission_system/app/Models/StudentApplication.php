@@ -10,9 +10,17 @@ class StudentApplication extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'adm_applications';
+
     public function getFullNameAttribute(): string
     {
-        return trim($this->firstname . ' ' . ($this->middlename ? $this->middlename . ' ' : '') . $this->lastname . ($this->name_extender ? ' ' . $this->name_extender : ''));
+        $parts = array_filter([
+            $this->firstname,
+            $this->middlename,
+            $this->lastname,
+            $this->name_extender,
+        ]);
+        return implode(' ', $parts);
     }
 
     protected $fillable = [

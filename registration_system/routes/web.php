@@ -21,7 +21,12 @@ Route::get('/', function () {
         if ($user->role === 'teacher') return redirect()->route('teacher.dashboard');
         return redirect()->route('dashboard');
     }
-    return view('welcome');
+    $app_settings = [
+        'school_name' => \App\Models\Setting::getValue('school_name', 'Partido State University'),
+        'active_semester' => \App\Models\Setting::getValue('active_semester', '1'),
+        'active_school_year' => \App\Models\Setting::getValue('active_school_year', date('Y') . '-' . (date('Y') + 1)),
+    ];
+    return view('welcome', compact('app_settings'));
 });
 
 Route::get('/applications/status', [App\Http\Controllers\ApplicationController::class, 'checkStatus'])->name('applications.status');
@@ -147,6 +152,7 @@ Route::middleware(['auth', 'force.password'])->group(function () {
     // Teacher Routes
     Route::middleware(['teacher'])->group(function () {
         Route::get('/teacher/dashboard', [DashboardController::class, 'teacher'])->name('teacher.dashboard');
+        Route::get('/teacher/teaching-load', [DashboardController::class, 'teachingLoad'])->name('teacher.teaching_load');
         Route::post('/teacher/announcements', [App\Http\Controllers\Teacher\SectionManagementController::class, 'storeAnnouncement'])->name('teacher.announcements.store');
         
         Route::prefix('teacher/sections/{section}')->name('teacher.sections.')->group(function() {

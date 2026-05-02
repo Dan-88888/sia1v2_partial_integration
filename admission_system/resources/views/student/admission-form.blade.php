@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSU - Student Admission Form</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .psu-blue-bg { background: linear-gradient(135deg, #000035 0%, #00004d 100%); }
@@ -134,7 +135,8 @@
                         </svg>
                         Track Application
                     </a>
-                    <a href="{{ route('home') }}"
+                    <a href="#"
+                       onclick="window.parent.postMessage({action:'navigate-home'}, '*'); return false;"
                        class="text-gray-300 hover:text-white transition flex items-center gap-1.5">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -365,8 +367,9 @@
                                     <div>
                                         <label class="field-label">Gmail Account <span class="text-red-500">*</span></label>
                                         <div class="flex">
-                                            <input type="email" name="gmail_account" value="{{ old('gmail_account') }}" required
-                                                   placeholder="youremail"
+                                            <input type="text" name="gmail_account"
+                                                   value="{{ preg_replace('/@gmail\.com$/i', '', old('gmail_account', '')) }}"
+                                                   required placeholder="youremail"
                                                    class="field-input rounded-r-none border-r-0 @error('gmail_account') is-error @enderror">
                                             <span class="inline-flex items-center px-3 bg-gray-100 border-l-0 border-y border-r border-gray-300 rounded-r-lg text-gray-500 text-sm font-medium whitespace-nowrap" style="border-width:1.5px">
                                                 @gmail.com
@@ -712,7 +715,8 @@
         var STEP_REQUIRED = {
             1: ['lastname','firstname','age','sex','civil_status','date_of_birth',
                 'birth_place','temporary_address','permanent_address','contact_number','gmail_account'],
-            2: ['guardian_name','guardian_relationship','guardian_phone']
+            2: ['guardian_name','guardian_relationship','guardian_phone'],
+            3: ['student_type','campus','college','course']
         };
 
         function validateStep(stepNum) {
@@ -736,6 +740,16 @@
                 }
             });
 
+            /* Gmail format check: if user included @, it must end with @gmail.com */
+            if (stepNum === 1) {
+                var gmailEl = document.querySelector('#step-1 [name="gmail_account"]');
+                if (gmailEl && gmailEl.value.trim() && gmailEl.value.trim().indexOf('@') !== -1
+                        && !gmailEl.value.trim().toLowerCase().endsWith('@gmail.com')) {
+                    gmailEl.classList.add('is-error');
+                    valid = false;
+                }
+            }
+
             if (!valid) {
                 /* Show inline error banner at top of the current step */
                 var stepEl = document.getElementById('step-' + stepNum);
@@ -757,6 +771,18 @@
 
             /* Validate when moving FORWARD only */
             if (n > current && !validateStep(current)) return;
+            if (n > current && current === 1 && hasDuplicateBlock()) {
+                var dupBanner = document.getElementById('step-error-banner');
+                if (!dupBanner) {
+                    dupBanner = document.createElement('div');
+                    dupBanner.id = 'step-error-banner';
+                    dupBanner.className = 'mb-3 p-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm font-semibold';
+                    dupBanner.textContent = 'Please resolve the duplicate warnings above before proceeding.';
+                    var step1El = document.getElementById('step-1');
+                    if (step1El) step1El.prepend(dupBanner);
+                }
+                return;
+            }
 
             /* Remove error banner when navigating */
             var banner = document.getElementById('step-error-banner');
@@ -858,6 +884,83 @@
             }
         }
 
+        /* ── Duplicate checking ── */
+        var duplicateFlags = { gmail_account: false, name: false };
+
+        function showDuplicateWarning(key, msg) {
+            duplicateFlags[key] = true;
+            var id = 'dup-warn-' + key;
+            if (document.getElementById(id)) return;
+
+            var el = document.createElement('div');
+            el.id = id;
+            el.style.cssText = 'display:flex;align-items:flex-start;gap:10px;background:#fff1f2;border:1.5px solid #f87171;border-radius:8px;padding:10px 14px;margin-top:10px;width:100%;box-sizing:border-box;';
+
+            var icon = document.createElement('div');
+            icon.style.cssText = 'flex-shrink:0;width:18px;height:18px;background:#dc2626;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:1px;';
+            icon.innerHTML = '<svg width="10" height="10" viewBox="0 0 20 20" fill="white"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>';
+
+            var text = document.createElement('span');
+            text.textContent = msg;
+            text.style.cssText = 'font-size:13px;font-weight:600;color:#b91c1c;line-height:1.5;';
+
+            el.appendChild(icon);
+            el.appendChild(text);
+
+            var anchor;
+            if (key === 'gmail_account') {
+                /* parent div that holds label + flex-row input */
+                anchor = document.querySelector('[name="gmail_account"]').closest('.flex').parentElement;
+                anchor.appendChild(el);
+            } else {
+                /* insert after the grid row that holds the name inputs */
+                var grid = document.querySelector('[name="lastname"]').closest('.grid');
+                if (!grid) grid = document.querySelector('[name="lastname"]').parentElement.parentElement;
+                grid.insertAdjacentElement('afterend', el);
+            }
+        }
+
+        function clearDuplicateWarning(key) {
+            duplicateFlags[key] = false;
+            var el = document.getElementById('dup-warn-' + key);
+            if (el) el.remove();
+        }
+
+        function hasDuplicateBlock() {
+            return duplicateFlags.gmail_account || duplicateFlags.name;
+        }
+
+        function runDuplicateCheck() {
+            var email    = document.querySelector('[name="gmail_account"]').value.trim();
+            var first    = document.querySelector('[name="firstname"]').value.trim();
+            var last     = document.querySelector('[name="lastname"]').value.trim();
+            if (!email && !first && !last) return;
+
+            var body = new URLSearchParams();
+            body.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            // Server normalizes: appends @gmail.com if no @ is present
+            var emailToCheck = email;
+            if (email)         body.append('gmail_account', emailToCheck);
+            if (first && last) { body.append('firstname', first); body.append('lastname', last); }
+
+            fetch('{{ route("student.check-duplicate") }}', { method: 'POST', body: body })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    ['gmail_account', 'name'].forEach(function (k) {
+                        if (data.conflicts && data.conflicts[k]) {
+                            showDuplicateWarning(k, data.conflicts[k]);
+                            if (k === 'gmail_account') document.querySelector('[name="gmail_account"]').classList.add('is-error');
+                            if (k === 'name') { document.querySelector('[name="firstname"]').classList.add('is-error'); document.querySelector('[name="lastname"]').classList.add('is-error'); }
+                        } else {
+                            clearDuplicateWarning(k);
+                            if (k === 'gmail_account') document.querySelector('[name="gmail_account"]').classList.remove('is-error');
+                            if (k === 'name') { document.querySelector('[name="firstname"]').classList.remove('is-error'); document.querySelector('[name="lastname"]').classList.remove('is-error'); }
+                        }
+                    });
+                })
+                .catch(function () {});
+        }
+
         /* ── Boot everything when DOM is ready ── */
         document.addEventListener('DOMContentLoaded', function () {
             initCascade();
@@ -868,10 +971,91 @@
                 f.addEventListener('input',  function () { f.classList.remove('is-error'); });
                 f.addEventListener('change', function () { f.classList.remove('is-error'); });
             });
+
+            /* Duplicate checks on blur */
+            ['gmail_account', 'firstname', 'lastname'].forEach(function (n) {
+                var el = document.querySelector('[name="' + n + '"]');
+                if (el) el.addEventListener('blur', runDuplicateCheck);
+            });
+
+            /* Gmail: auto-strip @gmail.com if user types the full address */
+            var gmailInput = document.querySelector('[name="gmail_account"]');
+            if (gmailInput) {
+                gmailInput.addEventListener('input', function () {
+                    if (this.value.toLowerCase().endsWith('@gmail.com')) {
+                        var pos = this.selectionStart - 10;
+                        this.value = this.value.slice(0, -10);
+                        if (pos >= 0) this.setSelectionRange(pos, pos);
+                    }
+                    this.classList.remove('is-error');
+                });
+            }
+
+            /* Clear terms error styling when user checks the box */
+            var termsEl = document.getElementById('terms');
+            if (termsEl) {
+                termsEl.addEventListener('change', function () {
+                    var wrapper = this.closest('div');
+                    if (wrapper) { wrapper.style.borderColor = ''; wrapper.style.background = ''; }
+                    var err = document.getElementById('terms-error');
+                    if (err) err.remove();
+                });
+            }
+
         });
 
         /* Expose handleFileChange globally (used via onchange attribute) */
         window.handleFileChange = handleFileChange;
+
+        /* Validate step-3 fields, file uploads, and terms before submitting */
+        function validateBeforeSubmit() {
+            var valid = validateStep(3);
+
+            /* Required file uploads */
+            [
+                { id: 'input-photo', zone: 'zone-photo' },
+                { id: 'input-bc',    zone: 'zone-bc'    },
+                { id: 'input-rc',    zone: 'zone-rc'    }
+            ].forEach(function (fc) {
+                var inp  = document.getElementById(fc.id);
+                var zone = document.getElementById(fc.zone);
+                if (inp && zone && inp.files.length === 0) {
+                    zone.classList.add('is-error');
+                    valid = false;
+                }
+            });
+
+            /* Terms must be accepted */
+            var terms = document.getElementById('terms');
+            if (terms && !terms.checked) {
+                var wrapper = terms.closest('div');
+                if (wrapper) { wrapper.style.borderColor = '#ef4444'; wrapper.style.background = '#fff5f5'; }
+                if (!document.getElementById('terms-error')) {
+                    var termsErr = document.createElement('p');
+                    termsErr.id = 'terms-error';
+                    termsErr.className = 'text-red-600 text-sm mt-2 font-semibold';
+                    termsErr.textContent = 'You must agree to the terms and conditions before submitting.';
+                    terms.closest('div').insertAdjacentElement('afterend', termsErr);
+                }
+                valid = false;
+            }
+
+            return valid;
+        }
+
+        /* Validate before submit, then lock button to prevent double-submission */
+        document.querySelector('form').addEventListener('submit', function (e) {
+            if (!validateBeforeSubmit()) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            var btn = this.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Submitting…';
+            }
+        });
 
     })();
     </script>

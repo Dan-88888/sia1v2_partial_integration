@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instructor Portal - PSU</title>
+    <title>SUSA - ParSU</title>
+    <link rel="icon" type="image/png" href="PSU.png">
     <link rel="stylesheet" href="instructor_style.css">
 </head>
 

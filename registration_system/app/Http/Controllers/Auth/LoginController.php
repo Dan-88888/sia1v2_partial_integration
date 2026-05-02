@@ -21,21 +21,25 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        // 1. Verify if the email matches a submitted and approved application
-        $application = \App\Models\Application::where('email', $credentials['email'])->first();
-        
-        // If an application exists but is not approved yet
-        if ($application && $application->status === 'Pending') {
-            return back()->withErrors([
-                'email' => 'Your student application is still pending review. Access will be granted once an administrator approves your admission.',
-            ])->onlyInput('email');
-        }
+        // Allow admin/teacher accounts to login without an application record
+        $existingUser = \App\Models\User::where('email', $credentials['email'])->first();
+        if ($existingUser && in_array($existingUser->role, ['admin', 'teacher'])) {
+            // Skip application check for admin and teacher accounts
+        } else {
+            // For students: verify email matches a submitted and approved application
+            $application = \App\Models\Application::where('email', $credentials['email'])->first();
 
-        // If no application exists, and the user doesn't already exist in the system
-        if (!$application && !\App\Models\User::where('email', $credentials['email'])->exists()) {
-            return back()->withErrors([
-                'email' => 'No admission record found for this email. Please submit an application first.',
-            ])->onlyInput('email');
+            if ($application && $application->status === 'Pending') {
+                return back()->withErrors([
+                    'email' => 'Your application is still pending review. Access will be granted once an administrator approves it.',
+                ])->onlyInput('email');
+            }
+
+            if (!$application && !$existingUser) {
+                return back()->withErrors([
+                    'email' => 'No admission record found for this email. Please submit an application first.',
+                ])->onlyInput('email');
+            }
         }
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
@@ -123,20 +127,24 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        $application = \App\Models\Application::where('email', $credentials['email'])->first();
+        $existingUser = \App\Models\User::where('email', $credentials['email'])->first();
 
-        if ($application && $application->status === 'Pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Your application is still pending review. Access will be granted once approved.',
-            ], 403);
-        }
+        if (!$existingUser || !in_array($existingUser->role, ['admin', 'teacher'])) {
+            $application = \App\Models\Application::where('email', $credentials['email'])->first();
 
-        if (!$application && !\App\Models\User::where('email', $credentials['email'])->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No record found for this email. Please submit an application first.',
-            ], 403);
+            if ($application && $application->status === 'Pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your application is still pending review. Access will be granted once an administrator approves it.',
+                ], 403);
+            }
+
+            if (!$application && !$existingUser) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No account found for this email. Please submit an application or contact the administrator.',
+                ], 403);
+            }
         }
 
         if (Auth::attempt($credentials)) {

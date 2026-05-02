@@ -59,12 +59,14 @@
 
             @if($application->status === 'Approved')
             <div style="margin-top: 25px; padding: 20px; background: #eff6ff; border-radius: 12px; border: 1px solid #bfdbfe; color: #1e40af; font-size: 0.9em;">
-                <strong>Congratulations!</strong> Your application has been approved. You can now log in using your registered email and the default password <code>password123</code>.
+                <strong>Congratulations!</strong> Your application has been approved. You can now log in using:<br><br>
+                <strong>Email:</strong> <code>{{ $application->email }}</code><br>
+                <strong>Password:</strong> <code>{{ $application->temp_password }}</code>
             </div>
             @endif
         </div>
 
-        <a href="/" class="back-link">← Return to Portal</a>
+        <a href="{{ url('/') }}{{ request('role') ? '?role=' . request('role') : '' }}" class="back-link">← Return to Portal</a>
     </div>
 </body>
 </html>

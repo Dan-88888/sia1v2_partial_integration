@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSU - Application Status</title>
+    <title>{{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .psu-blue-bg {
@@ -89,7 +89,7 @@
         <div class="max-w-3xl mx-auto">
             <!-- Navigation Breadcrumb -->
             <div class="mb-6 flex items-center text-sm">
-                <a href="{{ route('home') }}" class="text-gray-500 hover:text-[#000035] transition">Home</a>
+                <a href="#" onclick="window.parent.postMessage({action:'navigate-home'}, '*'); return false;" class="text-gray-500 hover:text-[#000035] transition">Home</a>
                 <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
@@ -154,7 +154,7 @@
                     <div class="text-center mb-6 md:mb-8">
                         <div class="w-16 h-16 md:w-24 md:h-24 bg-[#000035] rounded-full flex items-center justify-center mx-auto mb-4">
                             <span class="text-2xl md:text-4xl font-bold text-yellow-400">
-                                {{ substr($application->firstname, 0, 1) }}{{ substr($application->lastname, 0, 1) }}
+                                {{ substr($application->firstname ?? '?', 0, 1) }}{{ substr($application->lastname ?? '', 0, 1) }}
                             </span>
                         </div>
                         <h2 class="text-xl md:text-3xl font-bold text-[#000035]">{{ $application->full_name }}</h2>
@@ -286,7 +286,7 @@
                                 </svg>
                                 <p class="text-sm font-medium text-gray-500">Campus</p>
                             </div>
-                            <p class="text-base md:text-lg font-bold text-[#000035]">{{ $application->campus }} Campus</p>
+                            <p class="text-base md:text-lg font-bold text-[#000035]">{{ $application->campus }}{{ str_contains(strtolower($application->campus ?? ''), 'campus') ? '' : ' Campus' }}</p>
                         </div>
                         <div class="summary-card">
                             <div class="flex items-center mb-2">
@@ -345,7 +345,8 @@
                             View Full Details
                         </a>
                         
-                        <a href="{{ route('home') }}" 
+                        <a href="#"
+                           onclick="window.parent.postMessage({action:'navigate-home'}, '*'); return false;"
                            class="action-btn bg-gray-600 text-white hover:bg-gray-700">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>

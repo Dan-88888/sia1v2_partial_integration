@@ -17,6 +17,7 @@ Route::get('/login', function() {
 // Student Routes
 Route::prefix('student')->name('student.')->group(function () {
     Route::get('/apply', [StudentController::class, 'showForm'])->name('apply');
+    Route::post('/check-duplicate', [StudentController::class, 'checkDuplicate'])->name('check-duplicate');
     Route::post('/submit', [StudentController::class, 'submitApplication'])->name('submit');
     Route::get('/review/{id}', [StudentController::class, 'reviewApplication'])->name('review');
     Route::get('/edit/{id}', [StudentController::class, 'editApplication'])->name('edit');
@@ -27,7 +28,7 @@ Route::prefix('student')->name('student.')->group(function () {
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [AdminController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AdminController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/login', [AdminController::class, 'login'])->middleware('throttle:5,1')->name('login.post');
     Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
     
     // Protected admin routes

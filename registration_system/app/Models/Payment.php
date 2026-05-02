@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
 {
+    protected $table = 'reg_payments';
+
     protected $fillable = [
         'student_id', 'amount', 'status', 'reference_number', 'payment_date', 'semester', 'school_year'
     ];

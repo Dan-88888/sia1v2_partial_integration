@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class PreEnlistment extends Model
 {
+    protected $table = 'reg_pre_enlistments';
+
     protected $fillable = [
         'student_id',
         'subject_id',

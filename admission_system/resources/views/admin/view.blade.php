@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSU - View Application</title>
+    <title>{{ config('app.name') }}</title>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
@@ -154,9 +154,11 @@
                         <!-- Status Action Buttons -->
                         <div class="flex flex-wrap gap-2">
                             <form action="{{ route('admin.approve', $application->id) }}" method="POST" class="inline"
-                                  onsubmit="return confirm('Approve this application for {{ $application->firstname }} {{ $application->lastname }}?')">
+                                  data-confirm-title="Approve Application"
+                                  data-confirm-msg="Approve this application for {{ $application->firstname }} {{ $application->lastname }}?"
+                                  data-confirm-color="green">
                                 @csrf
-                                <button type="submit" class="bg-green-600 text-white px-5 py-2.5 rounded-xl hover:bg-green-700 transition-all duration-300 transform hover:-translate-y-1 flex items-center text-sm font-bold shadow-md hover:shadow-xl">
+                                <button type="button" onclick="showConfirmModal(this.closest('form'))" class="bg-green-600 text-white px-5 py-2.5 rounded-xl hover:bg-green-700 transition-all duration-300 transform hover:-translate-y-1 flex items-center text-sm font-bold shadow-md hover:shadow-xl">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                     </svg>
@@ -164,9 +166,11 @@
                                 </button>
                             </form>
                             <form action="{{ route('admin.waitlist', $application->id) }}" method="POST" class="inline"
-                                  onsubmit="return confirm('Waitlist this application for {{ $application->firstname }} {{ $application->lastname }}?')">
+                                  data-confirm-title="Waitlist Application"
+                                  data-confirm-msg="Move this application for {{ $application->firstname }} {{ $application->lastname }} to the waitlist?"
+                                  data-confirm-color="blue">
                                 @csrf
-                                <button type="submit" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex items-center text-sm font-bold shadow-md hover:shadow-xl">
+                                <button type="button" onclick="showConfirmModal(this.closest('form'))" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex items-center text-sm font-bold shadow-md hover:shadow-xl">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
@@ -174,9 +178,11 @@
                                 </button>
                             </form>
                             <form action="{{ route('admin.reject', $application->id) }}" method="POST" class="inline"
-                                  onsubmit="return confirm('Reject this application for {{ $application->firstname }} {{ $application->lastname }}? This will notify the applicant.')">
+                                  data-confirm-title="Reject Application"
+                                  data-confirm-msg="Reject this application for {{ $application->firstname }} {{ $application->lastname }}? This will notify the applicant."
+                                  data-confirm-color="red">
                                 @csrf
-                                <button type="submit" class="bg-red-600 text-white px-5 py-2.5 rounded-xl hover:bg-red-700 transition-all duration-300 transform hover:-translate-y-1 flex items-center text-sm font-bold shadow-md hover:shadow-xl">
+                                <button type="button" onclick="showConfirmModal(this.closest('form'))" class="bg-red-600 text-white px-5 py-2.5 rounded-xl hover:bg-red-700 transition-all duration-300 transform hover:-translate-y-1 flex items-center text-sm font-bold shadow-md hover:shadow-xl">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                     </svg>
@@ -328,7 +334,7 @@
                                     </div>
                                     <div>
                                         <p class="info-label">Preferred Campus</p>
-                                        <p class="info-value">{{ $application->campus }} Campus</p>
+                                        <p class="info-value">{{ $application->campus }}{{ str_contains(strtolower($application->campus ?? ''), 'campus') ? '' : ' Campus' }}</p>
                                     </div>
                                     <div>
                                         <p class="info-label">College</p>
@@ -496,5 +502,46 @@
         if (overlay) overlay.addEventListener('click', closeSidebar);
     })();
     </script>
+
+<!-- Custom Confirm Modal -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);">
+    <div style="background:#fff;border-radius:16px;padding:32px 28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:modalIn .18s ease;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <div id="modal-icon" style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            </div>
+            <h3 id="modal-title" style="font-size:16px;font-weight:700;color:#111827;margin:0;"></h3>
+        </div>
+        <p id="modal-msg" style="font-size:14px;color:#6b7280;margin:0 0 24px 52px;line-height:1.6;"></p>
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button onclick="closeConfirmModal()" style="padding:9px 20px;border-radius:8px;border:1.5px solid #d1d5db;background:#fff;color:#374151;font-size:14px;font-weight:600;cursor:pointer;">Cancel</button>
+            <button id="modal-confirm-btn" style="padding:9px 20px;border-radius:8px;border:none;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Confirm</button>
+        </div>
+    </div>
+</div>
+<style>@keyframes modalIn { from { opacity:0;transform:scale(.95) translateY(-8px); } to { opacity:1;transform:none; } }</style>
+<script>
+    var _pendingForm = null;
+    function showConfirmModal(form) {
+        _pendingForm = form;
+        var colors = { red:'#dc2626', blue:'#2563eb', green:'#16a34a', yellow:'#d97706' };
+        var bg = colors[form.dataset.confirmColor] || '#dc2626';
+        document.getElementById('modal-title').textContent = form.dataset.confirmTitle || 'Confirm Action';
+        document.getElementById('modal-msg').textContent   = form.dataset.confirmMsg   || 'Are you sure?';
+        document.getElementById('modal-icon').style.background = bg;
+        document.getElementById('modal-confirm-btn').style.background = bg;
+        document.getElementById('confirm-modal').style.display = 'flex';
+    }
+    function closeConfirmModal() {
+        document.getElementById('confirm-modal').style.display = 'none';
+        _pendingForm = null;
+    }
+    document.getElementById('modal-confirm-btn').addEventListener('click', function () {
+        if (_pendingForm) { var f = _pendingForm; closeConfirmModal(); f.submit(); }
+    });
+    document.getElementById('confirm-modal').addEventListener('click', function (e) {
+        if (e.target === this) closeConfirmModal();
+    });
+</script>
 </body>
 </html>

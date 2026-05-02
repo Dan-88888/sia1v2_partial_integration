@@ -179,7 +179,7 @@ INSERT INTO `users` (`user_id`, `password`, `full_name`, `role`) VALUES
 ('admin01', 'admin123', 'System Admin', 'admin'),
 ('inst01', '12345', 'Juan Dela Cruz', 'instructor'),
 ('inst02', '12345', 'Rowell Artiaga', 'instructor'),
-('inst03', '12345', 'Salvador Briones ||', 'instructor'),
+('inst03', '12345', 'Salvador Briones', 'instructor'),
 ('inst04', '12345', 'Nicolas Pura', 'instructor');
 
 --

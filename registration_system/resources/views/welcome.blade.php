@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ config('app.name') }}</title>
-  <link rel="icon" type="image/png" href="{{ asset('images/nobgParsulogo.png') }}">
+  <link rel="icon" type="image/png" href="{{ asset('images/PSU.png') }}">
   <link rel="stylesheet" href="{{ asset('css/university_portal.css') }}" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
@@ -65,7 +65,7 @@
         </div>
 
         <button class="login-btn" id="loginBtn">Login</button>
-        <a href="{{ route('password.request') }}" class="forgot-btn" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">Forgot Password</a>
+        <a href="{{ route('password.request') }}?role={{ $filteredRole ?? 'student' }}" class="forgot-btn" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">Forgot Password</a>
 
         <div class="apply-buttons">
           @if(!$filteredRole || $filteredRole === 'student')
@@ -80,13 +80,13 @@
           <i class="fas fa-search me-1"></i> Track Application Status
         </button>
 
-        {{-- Demo Credentials Hint --}}
+        {{-- Admin Credentials Hint --}}
         @if(!$filteredRole || $filteredRole === 'admin')
         <div style="margin-top:16px; padding:12px 16px; background:#f0f4ff; border:1px solid #c7d2fe; border-radius:10px; text-align:center;">
           <p style="font-size:0.78rem; color:#3730a3; margin:0; line-height:1.7;">
-            <strong>Demo Credentials (Admin)</strong><br>
-            Email: <code style="background:#e0e7ff; padding:1px 5px; border-radius:4px;">admin@university.com</code><br>
-            Password: <code style="background:#e0e7ff; padding:1px 5px; border-radius:4px;">admin123</code>
+            <strong>Administrator Login</strong><br>
+            Email: <code style="background:#e0e7ff; padding:1px 5px; border-radius:4px;">admin@parsu.edu.ph</code><br>
+            Password: <code style="background:#e0e7ff; padding:1px 5px; border-radius:4px;">Admin@123</code>
           </p>
         </div>
         @endif
@@ -94,9 +94,8 @@
         @if(!$filteredRole || $filteredRole === 'teacher')
         <div style="margin-top:16px; padding:12px 16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; text-align:center;">
           <p style="font-size:0.78rem; color:#166534; margin:0; line-height:1.7;">
-            <strong>Demo Credentials (Teacher)</strong><br>
-            Email: <code style="background:#dcfce7; padding:1px 5px; border-radius:4px;">teacher@university.com</code><br>
-            Password: <code style="background:#dcfce7; padding:1px 5px; border-radius:4px;">teacher123</code>
+            <strong>Instructor Login</strong><br>
+            Use the email and password provided upon approval of your application.
           </p>
         </div>
         @endif
@@ -168,9 +167,10 @@
           </div>
         </div>
       </form>
+      <div id="student-form-error" style="display:none; background:#fee2e2; color:#b91c1c; padding:10px 14px; border-radius:8px; margin-top:12px; font-size:0.85rem; border:1px solid #fecaca; text-align:center;"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
-        <button class="btn" style="background:#e0e0e0;color:#333" onclick="closeAppForms()">Cancel</button>
-        <button class="btn btn-navy" onclick="submitStudentApp()">Submit Application</button>
+        <button type="button" class="btn" style="background:#e0e0e0;color:#333" onclick="closeAppForms()">Cancel</button>
+        <button type="button" class="btn btn-navy" onclick="submitStudentApp()">Submit Application</button>
       </div>
     </div>
   </div>
@@ -205,8 +205,8 @@
         </div>
       </form>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
-        <button class="btn" style="background:#e0e0e0;color:#333" onclick="closeAppForms()">Cancel</button>
-        <button class="btn btn-navy" onclick="submitTeacherApp()">Submit Application</button>
+        <button type="button" class="btn" style="background:#e0e0e0;color:#333" onclick="closeAppForms()">Cancel</button>
+        <button type="button" class="btn btn-navy" onclick="submitTeacherApp()">Submit Application</button>
       </div>
     </div>
   </div>
@@ -216,6 +216,7 @@
       <div class="app-form-title">Track Application</div>
       <p style="color:#666; font-size:0.9rem; margin-bottom:20px;">Enter your tracking number to check the status of your application.</p>
       <form action="{{ route('applications.status') }}" method="GET">
+        <input type="hidden" name="role" value="{{ $filteredRole ?? '' }}">
         <div class="form-group">
           <label>Tracking Number</label>
           <input name="tracking_number" placeholder="e.g. 26001" required autocomplete="off"                 style="padding:12px; border:2px solid #ddd; width:100%; border-radius:8px; font-size:1.1rem; text-align:center; font-family:monospace;">
@@ -240,6 +241,22 @@
     });
 
     document.getElementById('loginBtn').addEventListener('click', () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      if (!email || !password) {
+        const existing = document.getElementById('inline-login-error');
+        if (!existing) {
+          const err = document.createElement('div');
+          err.id = 'inline-login-error';
+          err.style.cssText = 'background:#fee2e2;color:#b91c1c;padding:10px;border-radius:8px;margin-bottom:12px;font-size:0.85rem;border:1px solid #fecaca;text-align:center;';
+          err.textContent = 'Please enter both your email and password.';
+          const loginForm = document.getElementById('loginForm');
+          loginForm.parentNode.insertBefore(err, loginForm);
+        }
+        return;
+      }
+      const inlineErr = document.getElementById('inline-login-error');
+      if (inlineErr) inlineErr.remove();
       document.getElementById('loginForm').submit();
     });
 
@@ -252,7 +269,9 @@
         studentForm.reset();
         document.getElementById('studentCourse').value = '';
         document.getElementById('studentCourseSearch').value = '';
+        document.getElementById('studentCourseSearch').style.borderColor = '';
         document.getElementById('courseResults').classList.remove('show');
+        document.getElementById('student-form-error').style.display = 'none';
         allCourses = [];
       }
 
@@ -453,6 +472,7 @@
     function selectCourse(name, code) {
       document.getElementById('studentCourseSearch').value = name;
       document.getElementById('studentCourse').value = code;
+      document.getElementById('studentCourseSearch').style.borderColor = '';
       document.getElementById('courseResults').classList.remove('show');
     }
 
@@ -479,15 +499,25 @@
     // Initialize Campuses on load
     loadCampuses();
 
-    function submitStudentApp() { 
+    function showStudentError(msg) {
+      const errDiv = document.getElementById('student-form-error');
+      errDiv.textContent = msg;
+      errDiv.style.display = 'block';
+      errDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function submitStudentApp() {
       const form = document.getElementById('studentAppForm');
+      const courseVal = document.getElementById('studentCourse').value.trim();
+      document.getElementById('student-form-error').style.display = 'none';
+
       if (!form.checkValidity()) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Incomplete Information',
-          text: 'Please fill in all required fields marked with * before submitting.',
-          confirmButtonColor: 'var(--navy)'
-        });
+        showStudentError('Please fill in all required fields marked with * before submitting.');
+        return;
+      }
+      if (!courseVal) {
+        document.getElementById('studentCourseSearch').style.borderColor = '#ef4444';
+        showStudentError('Please select a course from the dropdown list.');
         return;
       }
       submitApp('studentAppForm', "{{ url('/applications/submit') }}?type=student");

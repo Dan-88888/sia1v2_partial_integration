@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
 use App\Models\Teacher;
+use Illuminate\Http\Request;
 
 class TeacherManagementController extends Controller
 {
@@ -15,10 +14,10 @@ class TeacherManagementController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('teacher_id', 'like', "%$search%")
                   ->orWhere('college', 'like', "%$search%")
-                  ->orWhereHas('user', function($uq) use ($search) {
+                  ->orWhereHas('user', function ($uq) use ($search) {
                       $uq->where('name', 'like', "%$search%")
                          ->orWhere('email', 'like', "%$search%");
                   });
@@ -33,15 +32,14 @@ class TeacherManagementController extends Controller
             $query->where('college', $request->college);
         }
 
-        $teachers = $query->join('users', 'teachers.user_id', '=', 'users.id')
-            ->select('teachers.*', 'users.name')
-            ->orderBy('campus')
+        $teachers = $query->orderBy('campus')
             ->orderBy('college')
-            ->orderBy('users.name')
-            ->paginate(50)->withQueryString();
-            
-        $campuses = Teacher::select('campus')->whereNotNull('campus')->distinct()->pluck('campus');
-        $colleges = Teacher::select('college')->whereNotNull('college')->distinct()->pluck('college');
+            ->orderBy('id', 'desc')
+            ->paginate(50)
+            ->withQueryString();
+
+        $campuses = Teacher::select('campus')->whereNotNull('campus')->distinct()->orderBy('campus')->pluck('campus');
+        $colleges = Teacher::select('college')->whereNotNull('college')->distinct()->orderBy('college')->pluck('college');
 
         return view('admin.teachers.index', compact('teachers', 'campuses', 'colleges'));
     }
@@ -49,27 +47,35 @@ class TeacherManagementController extends Controller
     public function edit(Teacher $teacher)
     {
         $teacher->load('user');
-        return view('admin.teachers.edit', compact('teacher'));
+        $campuses = \DB::table('campuses')->orderBy('name')->pluck('name');
+        $colleges = \DB::table('colleges')->orderBy('name')->pluck('name');
+        return view('admin.teachers.edit', compact('teacher', 'campuses', 'colleges'));
     }
 
     public function update(Request $request, Teacher $teacher)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $teacher->user_id,
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|max:255|unique:users,email,' . $teacher->user_id,
+            'campus'        => 'nullable|string|max:255',
+            'college'       => 'nullable|string|max:255',
             'department_id' => 'nullable|string|max:255',
         ]);
 
         \DB::transaction(function () use ($request, $teacher) {
             $teacher->user->update([
-                'name' => $request->name,
+                'name'  => $request->name,
                 'email' => $request->email,
             ]);
 
             $teacher->update([
-                'department_id' => $request->department_id,
+                'campus'        => $request->campus,
+                'college'       => $request->college,
+                'department_id' => $request->college ?? $request->department_id,
             ]);
         });
+
+        $this->logAction('Updated Teacher Profile', $teacher);
 
         return redirect()->route('admin.teachers.index')->with('success', 'Teacher profile updated successfully.');
     }
@@ -77,18 +83,17 @@ class TeacherManagementController extends Controller
     public function destroy(Request $request, $id)
     {
         $teacher = Teacher::findOrFail($id);
-        $user = $teacher->user;
-        $email = $user ? $user->email : null;
+        $user    = $teacher->user;
+        $email   = $user?->email;
 
         \DB::transaction(function () use ($teacher, $user, $email) {
-            if ($teacher) $teacher->delete();
-            if ($user) $user->delete();
-            // Clean up associated application record
+            $teacher->delete();
+            $user?->delete();
             if ($email) {
                 \App\Models\Application::where('email', $email)->delete();
             }
         });
-        
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['message' => 'Teacher and associated user account deleted successfully.']);
         }

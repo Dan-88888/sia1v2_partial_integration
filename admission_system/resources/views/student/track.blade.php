@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSU - Track Application</title>
+    <title>{{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .psu-blue-bg {
@@ -53,7 +53,7 @@
         <div class="max-w-3xl mx-auto">
             <!-- Breadcrumb -->
             <div class="mb-6 flex items-center text-sm bg-white p-3 rounded-lg shadow-sm">
-                <a href="{{ route('home') }}" class="text-gray-500 hover:text-[#000035] transition flex items-center">
+                <a href="#" onclick="window.parent.postMessage({action:'navigate-home'}, '*'); return false;" class="text-gray-500 hover:text-[#000035] transition flex items-center">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                     </svg>
@@ -148,13 +148,19 @@
                                     Application ID
                                 </span>
                             </label>
-                            <input type="text" 
-                                   name="application_id" 
+                            <input type="text"
+                                   name="application_id"
                                    id="application_id"
-                                   placeholder="e.g., 12345" 
+                                   placeholder="e.g., 12345"
                                    value="{{ request('application_id') }}"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
-                                   onfocus="clearOtherField('email')">
+                                   oninput="hideError()">
+                            <div id="appIdError" class="hidden mt-2 flex items-center gap-1.5 text-sm text-red-600 bg-red-50 border border-red-300 rounded-lg px-3 py-2">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                <span id="appIdErrorText"></span>
+                            </div>
                             <p class="text-xs text-gray-500 mt-2 flex items-center">
                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -241,23 +247,38 @@
 
     <script>
 
-        // Form validation function
+        function showError(msg) {
+            const box = document.getElementById('appIdError');
+            document.getElementById('appIdErrorText').textContent = msg;
+            box.classList.remove('hidden');
+            document.getElementById('application_id').focus();
+        }
+
+        function hideError() {
+            document.getElementById('appIdError').classList.add('hidden');
+        }
+
         function validateForm() {
             const appId = document.getElementById('application_id').value.trim();
-            
-            // Check if field is empty
+
             if (!appId) {
-                alert('Please enter your Application ID.');
+                showError('Please enter your Application ID.');
                 return false;
             }
-            
-            // Validate Application ID format (should be numbers only)
+
             if (!/^\d+$/.test(appId)) {
-                alert('Application ID should contain only numbers.');
+                showError('Application ID should contain only numbers.');
                 return false;
             }
-            
-            return true; // Allow form submission
+
+            // Prevent double-submit
+            var btn = document.querySelector('#trackForm button[type="submit"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<svg class="w-5 h-5 mr-2 animate-spin inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Looking up…';
+            }
+
+            return true;
         }
 
         // Add event listeners for highlighting

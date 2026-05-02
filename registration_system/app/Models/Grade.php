@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Grade extends Model
 {
+    protected $table = 'reg_grades';
+
     protected $fillable = [
         'enrollment_id', 'midterm_grade', 'final_grade', 'remarks'
     ];

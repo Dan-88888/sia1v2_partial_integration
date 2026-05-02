@@ -7,6 +7,7 @@ use App\Models\StudentApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use App\Mail\ApplicationStatusUpdated;
 
 class AdminController extends Controller
@@ -25,7 +26,7 @@ class AdminController extends Controller
 
         if (Auth::guard('admin')->attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('admin/dashboard');
+            return redirect()->intended(route('admin.dashboard'));
         }
 
         return back()->withErrors([
@@ -38,7 +39,7 @@ class AdminController extends Controller
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect(env('FRONTEND_URL', 'http://localhost:3000'));
+        return redirect(config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:3000')));
     }
 
     public function dashboard()
@@ -191,11 +192,22 @@ class AdminController extends Controller
     {
         $application = StudentApplication::findOrFail($id);
         
+        // Normalize gmail before validation so unique rule sees the stored format
+        if ($request->filled('gmail_account') && !str_contains($request->gmail_account, '@')) {
+            $request->merge(['gmail_account' => $request->gmail_account . '@gmail.com']);
+        }
+
         $request->validate([
             'firstname' => 'required|string|max:255',
             'middlename' => 'nullable|string|max:255',
             'lastname' => 'required|string|max:255',
             'age' => 'required|integer|min:15|max:100',
+            'gmail_account' => [
+                'nullable', 'email',
+                Rule::unique('adm_applications', 'gmail_account')
+                    ->whereNull('deleted_at')
+                    ->ignore($id),
+            ],
             'contact_number' => 'required|string|max:20',
             'temporary_address' => 'required|string',
             'permanent_address' => 'required|string',
@@ -211,7 +223,7 @@ class AdminController extends Controller
             'report_card' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
         ]);
 
-        $data = $request->except(['photo', 'birth_certificate', 'report_card']);
+        $data = $request->except(['_token', '_method', 'photo', 'birth_certificate', 'report_card']);
 
         if ($request->hasFile('photo')) {
             $data['photo_path'] = $request->file('photo')->store('documents/photos', 'public');

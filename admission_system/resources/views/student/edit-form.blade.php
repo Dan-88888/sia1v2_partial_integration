@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSU - Edit Application</title>
+    <title>{{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .psu-blue-bg {
@@ -66,7 +66,7 @@
         <div class="max-w-5xl mx-auto">
             <!-- Navigation Breadcrumb -->
             <div class="mb-6 flex items-center text-sm">
-                <a href="{{ route('home') }}" class="text-gray-500 hover:text-[#000035] transition">Home</a>
+                <a href="#" onclick="window.parent.postMessage({action:'navigate-home'}, '*'); return false;" class="text-gray-500 hover:text-[#000035] transition">Home</a>
                 <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
@@ -476,6 +476,15 @@
             el.disabled = true;
         });
         @endif
+
+        // Prevent double-submit
+        document.querySelector('form').addEventListener('submit', function () {
+            var btn = this.querySelector('button[type="submit"]');
+            if (btn && !btn.disabled) {
+                btn.disabled = true;
+                btn.innerHTML = '<svg class="w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Saving…';
+            }
+        });
     </script>
 </body>
 </html>

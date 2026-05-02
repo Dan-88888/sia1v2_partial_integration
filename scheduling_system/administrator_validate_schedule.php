@@ -28,11 +28,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['validate'])) {
 
     // JOINED QUERY (FIXED)
     $query = "
-        SELECT 
+        SELECT
             s.*,
+            sub.course_code,
+            sub.description AS subject_name,
             u.full_name AS instructor_name,
             r.room_name
         FROM schedule s
+        LEFT JOIN subjects sub ON s.subject_id = sub.id
         LEFT JOIN instructor i ON s.instructor_id = i.instructor_id
         LEFT JOIN users u ON i.user_id = u.user_id
         LEFT JOIN rooms r ON s.room_id = r.id
@@ -100,7 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['validate'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schedule Management - Validate Schedule</title>
+    <title>SUSA - ParSU</title>
+    <link rel="icon" type="image/png" href="PSU.png">
     <style>
         * {
             margin: 0;

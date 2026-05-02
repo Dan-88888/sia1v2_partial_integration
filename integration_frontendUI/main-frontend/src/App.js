@@ -44,10 +44,10 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<RoleSelection />} />
-        <Route path="/admin-portal" element={<PortalFrame src={`${ADMISSION_URL}/admin/login`} title="Admin Portal" />} />
+        <Route path="/admin-portal" element={<PortalFrame src={`${ADMISSION_URL}/admin/login`} title="Admin Portal" hideBackButton />} />
         <Route path="/student-portal" element={<PortalFrame src={`${REGISTRATION_URL}/?role=student`} title="Student Portal" />} />
         <Route path="/instructor-portal" element={<PortalFrame src={`${REGISTRATION_URL}/?role=teacher`} title="Instructor Portal" />} />
-        <Route path="/admission-form" element={<PortalFrame src={`${ADMISSION_URL}/student/apply`} title="Apply for Admission" />} />
+        <Route path="/admission-form" element={<PortalFrame src={`${ADMISSION_URL}/student/apply`} title="Apply for Admission" hideBackButton />} />
         <Route path="/*" element={<AppShell />} />
       </Routes>
     </Router>

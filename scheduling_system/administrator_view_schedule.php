@@ -110,7 +110,8 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Schedule Management - View</title>
+    <title>SUSA - ParSU</title>
+    <link rel="icon" type="image/png" href="PSU.png">
     <link rel="stylesheet" href="styles.css">
 
     <style>
@@ -134,14 +135,14 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
         body {
             background: #fdfdfd;
             display: flex;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            padding-top: 45px;
         }
 
         .container {
             display: flex;
-            height: calc(100vh - 45px);
-            margin-top: 45px;
+            flex: 1;
+            width: 100%;
         }
 
         .sidebar {
@@ -151,6 +152,10 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
             flex-direction: column;
             padding: 25px 15px;
             border-right: 1px solid #dee2e6;
+            position: sticky;
+            top: 45px;
+            height: calc(100vh - 45px);
+            overflow-y: auto;
         }
 
         .sidebar .header {
@@ -218,8 +223,14 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
 
        .main {
             flex: 1;
-            padding: 40px;
-            overflow-y: auto;
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .main-inner {
+            width: 95%;
         }
 
         .main h2 {
@@ -383,6 +394,7 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
 
         <!-- Main Content -->
         <main class="main">
+            <div class="main-inner">
             <h2>View schedule</h2>
 
             <!-- Filters -->
@@ -449,6 +461,7 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
                     <tr>
                         <th>Subject</th>
                         <th>Teacher</th>
+                        <th>Section</th>
                         <th>Classroom</th>
                         <th>Day</th>
                         <th>Time</th>
@@ -459,7 +472,7 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
                 <tbody>
 <?php if (empty($filteredSchedules)): ?>
 <tr>
-    <td colspan="5" class="no-data">No schedules found.</td>
+    <td colspan="7" class="no-data">No schedules found.</td>
 </tr>
 <?php else: ?>
 <?php foreach ($filteredSchedules as $s): ?>
@@ -467,6 +480,8 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
     <td><?php echo htmlspecialchars($s['course_code'] ?? 'N/A'); ?></td>
 
     <td><?php echo htmlspecialchars($s['teacher_name'] ?? 'N/A'); ?></td>
+
+    <td><?php echo htmlspecialchars($s['section'] ?? 'N/A'); ?></td>
 
     <td><?php echo htmlspecialchars($s['room_name'] ?? 'N/A'); ?></td>
 
@@ -477,8 +492,8 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
     </td>
 
     <td>
-        <a href="administrator_update_schedule.php?id=<?php echo $s['id']; ?>">Edit</a> |
-        <a href="administrator_delete_schedule.php?id=<?php echo $s['id']; ?>">Delete</a>
+        <a href="administrator_update_schedule.php?id=<?php echo $s['id']; ?>" style="display:inline-block;padding:4px 12px;background:#16a34a;color:#fff;border-radius:5px;text-decoration:none;font-size:13px;font-weight:600;">Edit</a>
+        <a href="administrator_delete_schedule.php?id=<?php echo $s['id']; ?>" style="display:inline-block;padding:4px 12px;background:#dc2626;color:#fff;border-radius:5px;text-decoration:none;font-size:13px;font-weight:600;">Delete</a>
     </td>
 </tr>
 <?php endforeach; ?>
@@ -489,6 +504,7 @@ while ($r = mysqli_fetch_assoc($daysResult)) {
            <p class="footer-text">
     Showing <?php echo count($filteredSchedules); ?> schedules
 </p>
+            </div>
         </main>
 
     </div>

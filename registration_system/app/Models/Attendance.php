@@ -9,6 +9,8 @@ use App\Models\Section;
 
 class Attendance extends Model
 {
+    protected $table = 'reg_attendances';
+
     protected $fillable = [
         'student_id', 'section_id', 'date', 'status', 'remarks'
     ];

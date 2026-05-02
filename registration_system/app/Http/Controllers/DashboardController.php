@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Enrollment;
@@ -31,7 +32,12 @@ class DashboardController extends Controller
         }
         
         $student = $user->student;
-        
+
+        if (!$student) {
+            Auth::logout();
+            return redirect('/')->withErrors(['email' => 'Student profile not found. Please contact the administrator.']);
+        }
+
         $activeSemester = Setting::getValue('active_semester');
         $activeSY = Setting::getValue('active_school_year');
 
@@ -114,6 +120,21 @@ class DashboardController extends Controller
         ));
     }
 
+    public function teachingLoad()
+    {
+        if (Auth::user()->role !== 'teacher') abort(403);
+
+        $teacher = Auth::user()->teacher;
+        if (!$teacher) {
+            Auth::logout();
+            return redirect('/')->withErrors(['email' => 'Teacher profile not found.']);
+        }
+
+        $sections = $teacher->sections()->with(['subject', 'room'])->get();
+
+        return view('teacher.teaching_load', compact('teacher', 'sections'));
+    }
+
     public function teacher()
     {
         if (Auth::user()->role !== 'teacher') {
@@ -121,6 +142,12 @@ class DashboardController extends Controller
         }
 
         $teacher = Auth::user()->teacher;
+
+        if (!$teacher) {
+            Auth::logout();
+            return redirect('/')->withErrors(['email' => 'Teacher profile not found. Please contact the administrator.']);
+        }
+
         $sections = $teacher->sections()->with(['subject', 'room'])->get();
         $sectionIds = $sections->pluck('id');
 
@@ -150,10 +177,14 @@ class DashboardController extends Controller
         $ungradedCount = $enrolledIds->count() - ($passingCount + $failingCount);
 
         // Announcements
-        $announcements = \App\Models\Announcement::where('teacher_id', $teacher->id)
-            ->with('section')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        try {
+            $announcements = \App\Models\Announcement::where('teacher_id', $teacher->id)
+                ->with('section')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Exception $e) {
+            $announcements = collect();
+        }
 
         return view('dashboard.teacher', compact(
             'teacher', 'sections', 'totalStudents', 'todayClasses', 
@@ -192,9 +223,11 @@ class DashboardController extends Controller
             $data['teacher'] = $user->teacher;
         }
 
-        return view("dashboard.pages.{$slug}", array_merge(['title' => $title], $data))
-               ->exists() ? view("dashboard.pages.{$slug}", array_merge(['title' => $title], $data))
-               : view('dashboard.pages.placeholder', array_merge(['title' => $title], $data));
+        $viewName = "dashboard.pages.{$slug}";
+        if (!view()->exists($viewName)) {
+            $viewName = 'dashboard.pages.placeholder';
+        }
+        return view($viewName, array_merge(['title' => $title], $data));
     }
 
     public function settings()
@@ -270,12 +303,21 @@ class DashboardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $coursesByDept = \App\Models\Course::orderBy('department')
-            ->orderBy('course_name')
-            ->get()
-            ->groupBy(function ($course) {
-                return $course->department ?? 'Unassigned';
-            });
+        $courses = DB::table('adm_courses')
+            ->join('colleges', 'adm_courses.college_id', '=', 'colleges.id')
+            ->join('campuses', 'colleges.campus_id', '=', 'campuses.id')
+            ->select(
+                'adm_courses.id',
+                'adm_courses.name as course_name',
+                'colleges.name as college',
+                'campuses.name as campus'
+            )
+            ->orderBy('campuses.name')
+            ->orderBy('colleges.name')
+            ->orderBy('adm_courses.name')
+            ->get();
+
+        $coursesByDept = $courses->groupBy('college');
 
         return view('departments.index', compact('coursesByDept'));
     }

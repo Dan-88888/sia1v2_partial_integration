@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Student extends Model
 {
+    protected $table = 'reg_students';
+
     protected $fillable = [
         'user_id', 'student_number', 'campus', 'college', 'course', 'year_level',
         'admission_status', 'admission_date', 'admission_reference'
@@ -37,9 +39,9 @@ class Student extends Model
 
     public function subjects()
     {
-        return $this->belongsToMany(Subject::class, 'enrollments', 'student_id', 'section_id')
-                    ->join('sections', 'enrollments.section_id', '=', 'sections.id')
-                    ->join('subjects', 'sections.subject_id', '=', 'subjects.id')
+        return $this->belongsToMany(Subject::class, 'reg_enrollments', 'student_id', 'section_id')
+                    ->join('reg_sections', 'reg_enrollments.section_id', '=', 'reg_sections.id')
+                    ->join('reg_subjects', 'reg_sections.subject_id', '=', 'reg_subjects.id')
                     ->withPivot('status')
                     ->withTimestamps();
     }

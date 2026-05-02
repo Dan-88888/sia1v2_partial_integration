@@ -13,12 +13,23 @@ $created_by = $_SESSION['user_id'] ?? null;
 $subjectsResult = mysqli_query($conn, "SELECT * FROM subjects");
 
 $teachersResult = mysqli_query($conn, "
-    SELECT i.instructor_id, u.full_name 
+    SELECT i.instructor_id, u.full_name
     FROM instructor i
     INNER JOIN users u ON i.user_id = u.user_id
 ");
 
 $roomsResult = mysqli_query($conn, "SELECT * FROM rooms");
+
+// Load sections (existing from student_profile + fixed set 2A-2D)
+$sectionsResult = mysqli_query($conn, "
+    SELECT section FROM (
+        SELECT DISTINCT section FROM student_profile WHERE section IS NOT NULL
+        UNION SELECT '2A'
+        UNION SELECT '2B'
+        UNION SELECT '2C'
+        UNION SELECT '2D'
+    ) AS all_sections ORDER BY section
+");
 
 $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -29,21 +40,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['create'])) {
 
-        $subject = $_POST['subject'] ?? '';
-        $teacher = $_POST['teacher'] ?? '';
-        $day = $_POST['day'] ?? '';
-        $classroom = $_POST['classroom'] ?? '';
-        $startTime = $_POST['start_time'] ?? '';
-        $endTime = $_POST['end_time'] ?? '';
+        $subject   = mysqli_real_escape_string($conn, $_POST['subject']    ?? '');
+        $teacher   = mysqli_real_escape_string($conn, $_POST['teacher']    ?? '');
+        $day       = mysqli_real_escape_string($conn, $_POST['day']        ?? '');
+        $classroom = mysqli_real_escape_string($conn, $_POST['classroom']  ?? '');
+        $startTime = mysqli_real_escape_string($conn, $_POST['start_time'] ?? '');
+        $endTime   = mysqli_real_escape_string($conn, $_POST['end_time']   ?? '');
+        $section   = mysqli_real_escape_string($conn, $_POST['section']    ?? '');
 
-        /* =========================
-           VALIDATION
-        ========================= */
         if (!$created_by) {
             $message = "You must be logged in.";
             $messageType = "error";
 
-        } elseif (empty($subject) || empty($teacher) || empty($day) || empty($classroom) || empty($startTime) || empty($endTime)) {
+        } elseif (empty($subject) || empty($teacher) || empty($day) || empty($classroom) || empty($startTime) || empty($endTime) || empty($section)) {
             $message = "Please complete all fields.";
             $messageType = "error";
 
@@ -53,38 +62,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         } else {
 
-            /* =========================
-               FETCH SUBJECT (for validation only)
-            ========================= */
-            $subjectQuery = mysqli_query($conn, "
-                SELECT * FROM subjects WHERE id='$subject'
-            ");
-            $subjectData = mysqli_fetch_assoc($subjectQuery);
-
-            /* =========================
-               INSERT SCHEDULE (FIXED)
-            ========================= */
             $sql = "INSERT INTO schedule (
-                subject_id,
-                room_id,
-                instructor_id,
-                day,
-                start_time,
-                end_time,
-                created_by,
-                section
+                subject_id, room_id, instructor_id, day,
+                start_time, end_time, created_by, section
             ) VALUES (
-                '$subject',
-                '$classroom',
-                '$teacher',
-                '$day',
-                '$startTime',
-                '$endTime',
-                '$created_by',
-                'BSIT'
+                '$subject', '$classroom', '$teacher', '$day',
+                '$startTime', '$endTime', '$created_by', '$section'
             )";
 
             if (mysqli_query($conn, $sql)) {
+                $newScheduleId = mysqli_insert_id($conn);
+
+                // Auto-enroll all students in the selected section
+                $enrollSql = "
+                    INSERT INTO enrollment (user_id, schedule_id)
+                    SELECT sp.user_id, $newScheduleId
+                    FROM student_profile sp
+                    WHERE sp.section = '$section'
+                ";
+                mysqli_query($conn, $enrollSql);
+
                 $message = "Schedule created successfully!";
                 $messageType = "success";
             } else {
@@ -100,303 +97,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html>
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .top-bar {
-        position: fixed;
-        top: 0;
-        width: 100%;
-        height: 45px;
-        background: #0b0f3b;
-    }
-
-    .container {
-        margin-top: 45px;
-    }
-
-    body {
-        padding-top: 40px;
-        background: #fdfdfd;
-        display: flex;
-        height: 100vh;
-        overflow: hidden;
-    }
-
-    .center-box {
-        text-align: center;
-        margin-top: 60px;
-    }
-
-    .logo {
-        width: 80px;
-        margin-bottom: 10px;
-    }
-
-    .btn {
-        display: block;
-        width: 240px;
-        margin: 10px auto;
-        padding: 12px;
-        background: #0b0f3b;
-        color: white;
-        border-radius: 12px;
-        border: none;
-        cursor: pointer;
-        text-decoration: none;
-        font-weight: bold;
-    }
-
-    .btn:hover {
-        background: #1a1f66;
-    }
-
-    .gray {
-        background: gray;
-    }
-
-    .role {
-        background: #0b0f3b;
-        color: white;
-        padding: 10px;
-        border-radius: 12px;
-        width: 240px;
-        margin: 15px auto;
-        font-weight: bold;
-    }
-
-    .form-stack {
-        margin-top: 20px;
-    }
-
-    .input-group {
-        width: 260px;
-        margin: 12px auto;
-        text-align: left;
-    }
-
-    .input-group input {
-        width: 100%;
-        border: none;
-        border-bottom: 2px solid black;
-        padding: 8px;
-        background: transparent;
-    }
-
-    .container {
-        display: flex;
-    }
-
-    .sidebar {
-        width: 280px;
-        background: #e9ecef;
-        display: flex;
-        flex-direction: column;
-        padding: 25px 15px;
-        border-right: 1px solid #dee2e6;
-    }
-
-    .sidebar .header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 30px;
-    }
-
-    .sidebar .logo {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-top: 5px;
-    }
-
-    .sidebar .school-text h1 {
-        font-size: 13px;
-        font-weight: 700;
-        color: #333;
-        line-height: 1.2;
-        margin-top: -5px;
-    }
-
-    .sidebar .school-text p {
-        font-size: 11px;
-        color: #666;
-        margin-top: 1px;
-    }
-
-    .sidebar h2 {
-        font-size: 18px;
-        margin-bottom: 25px;
-        color: #000;
-        font-weight: 700;
-        text-align: center;
-        padding-left: 0;
-    }
-
-    .sidebar nav {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-top: -5px;
-    }
-
-    .sidebar nav a {
-        text-decoration: none;
-        background: #0a0a3c;
-        color: white;
-        padding: 12px 15px;
-        border-radius: 4px;
-        font-size: 18px;
-        font-weight: 700;
-        text-align: center;
-        transition: background 0.2s ease-in-out;
-    }
-
-    .sidebar nav a:hover {
-        background: #2a2a7c;
-        transform: none;
-    }
-
-    .sidebar nav a.active {
-        background: #2a2a7c;
-        box-shadow: inset 0 0 0 2px #fff;
-    }
-
-    .content {
-        flex: 1;
-        padding: 40px;
-        overflow-y: auto;
-    }
-
-    .form-box {
-        background: #d9d9d9;
-        padding: 25px;
-        border-radius: 10px;
-        width: 600px;
-    }
-
-    .form-box select,
-    .form-box input {
-        width: 100%;
-        padding: 10px;
-        margin: 8px 0 15px 0;
-        border-radius: 6px;
-        border: 1px solid #aaa;
-    }
-
-    .time-row {
-        display: flex;
-        gap: 20px;
-    }
-
-    .time-row div {
-        flex: 1;
-    }
-
-    .btn-row {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-
-    .btn-row button {
-        padding: 10px 20px;
-        border-radius: 10px;
-        border: none;
-        cursor: pointer;
-    }
-
-    .btn-row .create {
-        background: #0a0a3c;
-        color: white;
-    }
-
-    .btn-row .create:hover {
-        background: #3f5191;
-    }
-
-    .btn-row .clear {
-        background: #ccc;
-    }
-
-    .container {
-        display: flex;
-        height: calc(100vh - 45px);
-    }
-
-    .content {
-        flex: 1;
-        padding: 40px;
-    }
-
-    .title {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .form-box {
-        background: #d9d9d9;
-        padding: 25px;
-        border-radius: 10px;
-        width: 600px;
-        margin: auto;
-    }
-
-    /* Message styles */
-    .message {
-        padding: 10px 15px;
-        border-radius: 6px;
-        margin-bottom: 15px;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    .message.success {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-
-    .message.error {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-    .btn-logout {
-            background-color: #1e235e; 
-            color: #fff;
-            border: none;
-            padding: 12px 3px;
-            border-radius: 5px;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            text-align: center;
-            margin-top: 30px;
-            transition: 0.3s; 
-        }
-
-    .btn-logout:hover {
-        background-color: #d32f2f; 
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .top-bar { position: fixed; top: 0; width: 100%; height: 45px; background: #0b0f3b; }
+    body { padding-top: 40px; background: #fdfdfd; display: flex; height: 100vh; overflow: hidden; }
+    .sidebar { width: 280px; background: #e9ecef; display: flex; flex-direction: column; padding: 25px 15px; border-right: 1px solid #dee2e6; }
+    .sidebar .header { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
+    .sidebar .logo { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-top: 5px; }
+    .sidebar .school-text h1 { font-size: 13px; font-weight: 700; color: #333; line-height: 1.2; margin-top: -5px; }
+    .sidebar .school-text p { font-size: 11px; color: #666; margin-top: 1px; }
+    .sidebar h2 { font-size: 18px; margin-bottom: 25px; color: #000; font-weight: 700; text-align: center; }
+    .sidebar nav { display: flex; flex-direction: column; gap: 8px; margin-top: -5px; }
+    .sidebar nav a { text-decoration: none; background: #0a0a3c; color: white; padding: 12px 15px; border-radius: 4px; font-size: 18px; font-weight: 700; text-align: center; transition: background 0.2s; }
+    .sidebar nav a:hover { background: #2a2a7c; }
+    .sidebar nav a.active { background: #2a2a7c; box-shadow: inset 0 0 0 2px #fff; }
+    .content { flex: 1; padding: 40px; overflow-y: auto; }
+    .container { display: flex; height: calc(100vh - 45px); }
+    .title { text-align: center; margin-bottom: 20px; }
+    .form-box { background: #d9d9d9; padding: 25px; border-radius: 10px; width: 600px; margin: auto; }
+    .form-box select, .form-box input { width: 100%; padding: 10px; margin: 8px 0 15px 0; border-radius: 6px; border: 1px solid #aaa; }
+    .time-row { display: flex; gap: 20px; }
+    .time-row div { flex: 1; }
+    .btn-row { display: flex; justify-content: flex-end; gap: 10px; }
+    .btn-row button { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; }
+    .btn-row .create { background: #0a0a3c; color: white; }
+    .btn-row .create:hover { background: #3f5191; }
+    .btn-row .clear { background: #ccc; }
+    .message { padding: 10px 15px; border-radius: 6px; margin-bottom: 15px; text-align: center; font-weight: 500; }
+    .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .btn-logout { background-color: #1e235e; color: #fff; border: none; padding: 12px 3px; border-radius: 5px; font-weight: 700; cursor: pointer; width: 100%; text-align: center; margin-top: 30px; transition: 0.3s; }
+    .btn-logout:hover { background-color: #d32f2f; }
 </style>
-
-<head>
-    <title>Dashboard - Create Schedule</title>
-</head>
-
+<head><title>SUSA - ParSU</title>
+    <link rel="icon" type="image/png" href="PSU.png"></head>
 <body>
     <div class="top-bar"></div>
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="header">
             <img src="PSU.png" alt="University Logo" class="logo">
@@ -405,9 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p>Goa, Camarines Sur</p>
             </div>
         </div>
-
         <h2>Schedule Management</h2>
-
         <nav id="sidebarNav">
             <a href="administrator_assign_subject.php">Assign subject / teacher / classroom</a>
             <a href="administrator_create_schedule.php" class="active">Create Schedule</a>
@@ -415,93 +151,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="administrator_validate_schedule.php">Validate Schedule</a>
             <a href="administrator_update_schedule.php">Update Schedule</a>
             <a href="administrator_delete_schedule.php">Delete Schedule</a>
-
-
-          <button class="btn-logout" onclick="window.location.href='administrator_logout.php'">Log Out</button>
-       
+            <button class="btn-logout" onclick="window.location.href='administrator_logout.php'">Log Out</button>
         </nav>
     </aside>
 
-    
-
-    <!-- CONTENT -->
     <div class="content">
-    <h2 class="title">Create schedule</h2>
+        <h2 class="title">Create Schedule</h2>
+        <div class="form-box">
+            <?php if (!empty($message)): ?>
+                <div class="message <?php echo $messageType; ?>">
+                    <?php echo htmlspecialchars($message); ?>
+                </div>
+            <?php endif; ?>
 
-    <div class="form-box">
+            <form method="POST" action="">
 
-        <?php if (!empty($message)): ?>
-            <div class="message <?php echo $messageType; ?>">
-                <?php echo htmlspecialchars($message); ?>
-            </div>
-        <?php endif; ?>
+                <label>Subject</label>
+                <select name="subject" required>
+                    <option value="">Select a subject</option>
+                    <?php while ($subj = mysqli_fetch_assoc($subjectsResult)): ?>
+                        <option value="<?php echo $subj['id']; ?>">
+                            <?php echo htmlspecialchars($subj['course_code'] . " - " . $subj['description']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
 
-        <form method="POST" action="">
+                <label>Teacher</label>
+                <select name="teacher" required>
+                    <option value="">Select a teacher</option>
+                    <?php while ($teach = mysqli_fetch_assoc($teachersResult)): ?>
+                        <option value="<?php echo $teach['instructor_id']; ?>">
+                            <?php echo htmlspecialchars($teach['full_name']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
 
-            <!-- SUBJECT (FROM DB) -->
-            <label>Subject</label>
-<select name="subject" required>
-    <option value="">Select a subject</option>
-    <?php while ($subj = mysqli_fetch_assoc($subjectsResult)): ?>
-        <option value="<?php echo $subj['id']; ?>">
-            <?php echo $subj['course_code'] . " - " . $subj['description']; ?>
-        </option>
-    <?php endwhile; ?>
-</select>
+                <label>Section</label>
+                <select name="section" required>
+                    <option value="">Select a section</option>
+                    <?php while ($sec = mysqli_fetch_assoc($sectionsResult)): ?>
+                        <option value="<?php echo htmlspecialchars($sec['section']); ?>">
+                            <?php echo htmlspecialchars($sec['section']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
 
-            <!-- INSTRUCTOR (FROM DB) -->
-            <label>Teacher</label>
-<select name="teacher" required>
-    <option value="">Select a teacher</option>
-    <?php while ($teach = mysqli_fetch_assoc($teachersResult)): ?>
-        <option value="<?php echo $teach['instructor_id']; ?>">
-            <?php echo $teach['full_name']; ?>
-        </option>
-    <?php endwhile; ?>
-</select>
-            <!-- DAY -->
-            <label>Day</label>
-            <select name="day" required>
-                <option value="">Select a day</option>
-                <?php foreach ($days as $d): ?>
-                    <option value="<?php echo $d; ?>"><?php echo $d; ?></option>
-                <?php endforeach; ?>
-            </select>
+                <label>Day</label>
+                <select name="day" required>
+                    <option value="">Select a day</option>
+                    <?php foreach ($days as $d): ?>
+                        <option value="<?php echo $d; ?>"><?php echo $d; ?></option>
+                    <?php endforeach; ?>
+                </select>
 
-            <!-- ROOM (FROM DB) -->
-            <label>Classroom</label>
-<select name="classroom" required>
-    <option value="">Select a room</option>
-    <?php while ($room = mysqli_fetch_assoc($roomsResult)): ?>
-        <option value="<?php echo $room['id']; ?>">
-            <?php echo $room['room_name']; ?>
-        </option>
-    <?php endwhile; ?>
-</select>
+                <label>Classroom</label>
+                <select name="classroom" required>
+                    <option value="">Select a room</option>
+                    <?php while ($room = mysqli_fetch_assoc($roomsResult)): ?>
+                        <option value="<?php echo $room['id']; ?>">
+                            <?php echo htmlspecialchars($room['room_name']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
 
-            <!-- TIME -->
-            <div class="time-row">
-                <div>
-                    <label>Start Time</label>
-                    <input type="time" name="start_time" required>
+                <div class="time-row">
+                    <div>
+                        <label>Start Time</label>
+                        <input type="time" name="start_time" required>
+                    </div>
+                    <div>
+                        <label>End Time</label>
+                        <input type="time" name="end_time" required>
+                    </div>
                 </div>
 
-                <div>
-                    <label>End Time</label>
-                    <input type="time" name="end_time" required>
+                <div class="btn-row">
+                    <button type="submit" name="clear" class="clear">Clear</button>
+                    <button type="submit" name="create" class="create">Create Schedule</button>
                 </div>
-            </div>
 
-            <!-- BUTTONS -->
-            <div class="btn-row">
-                <button type="submit" name="clear" class="clear">Clear</button>
-                <button type="submit" name="create" class="create">Create schedule</button>
-            </div>
-
-        </form>
+            </form>
+        </div>
     </div>
-</div>
-
 </body>
-
 </html>

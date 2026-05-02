@@ -12,7 +12,7 @@ $selectedSchedule = null;
 
 // SUBJECTS
 $subjects = [];
-$res = mysqli_query($conn, "SELECT id, course_code FROM subjects");
+$res = mysqli_query($conn, "SELECT id, course_code, description FROM subjects");
 while ($row = mysqli_fetch_assoc($res)) {
     $subjects[] = $row;
 }
@@ -33,6 +33,21 @@ $res = mysqli_query($conn, "
 ");
 while ($row = mysqli_fetch_assoc($res)) {
     $teachers[] = $row;
+}
+
+// SECTIONS
+$sectionsResult = mysqli_query($conn, "
+    SELECT section FROM (
+        SELECT DISTINCT section FROM student_profile WHERE section IS NOT NULL
+        UNION SELECT '2A'
+        UNION SELECT '2B'
+        UNION SELECT '2C'
+        UNION SELECT '2D'
+    ) AS all_sections ORDER BY section
+");
+$allSections = [];
+while ($row = mysqli_fetch_assoc($sectionsResult)) {
+    $allSections[] = $row['section'];
 }
 
 // DAYS
@@ -74,14 +89,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 
     $scheduleId = $_POST['schedule_id'] ?? '';
 
-    $subject = $_POST['subject'] ?? '';
-    $teacher = $_POST['teacher'] ?? '';
-    $day = $_POST['day'] ?? '';
-    $classroom = $_POST['classroom'] ?? '';
-    $startTime = $_POST['start_time'] ?? '';
-    $endTime = $_POST['end_time'] ?? '';
+    $subject   = mysqli_real_escape_string($conn, $_POST['subject']    ?? '');
+    $teacher   = mysqli_real_escape_string($conn, $_POST['teacher']    ?? '');
+    $day       = mysqli_real_escape_string($conn, $_POST['day']        ?? '');
+    $classroom = mysqli_real_escape_string($conn, $_POST['classroom']  ?? '');
+    $startTime = mysqli_real_escape_string($conn, $_POST['start_time'] ?? '');
+    $endTime   = mysqli_real_escape_string($conn, $_POST['end_time']   ?? '');
+    $section   = mysqli_real_escape_string($conn, $_POST['section']    ?? '');
 
-    if ($scheduleId == '' || $subject == '' || $teacher == '' || $day == '' || $classroom == '') {
+    if ($scheduleId == '' || $subject == '' || $teacher == '' || $day == '' || $classroom == '' || $section == '') {
         $message = "Please complete all fields.";
         $messageType = "error";
 
@@ -98,7 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
                 room_id = '$classroom',
                 day = '$day',
                 start_time = '$startTime',
-                end_time = '$endTime'
+                end_time = '$endTime',
+                section = '$section'
             WHERE id = '$scheduleId'
         ");
 
@@ -118,7 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schedule Management - Update Schedule</title>
+    <title>SUSA - ParSU</title>
+    <link rel="icon" type="image/png" href="PSU.png">
     <style>
         * {
             margin: 0;
@@ -135,16 +153,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             background: #0b0f3b;
         }
 
-        .container {
-            margin-top: 45px;
-        }
-
         body {
-            padding-top: 45px;
             background: #fdfdfd;
             display: flex;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            padding-top: 45px;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            width: 100%;
         }
 
         .sidebar {
@@ -154,6 +173,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             flex-direction: column;
             padding: 25px 15px;
             border-right: 1px solid #dee2e6;
+            position: sticky;
+            top: 45px;
+            height: calc(100vh - 45px);
+            overflow-y: auto;
         }
 
         .sidebar .header {
@@ -221,8 +244,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 
         .main {
             flex: 1;
-            padding: 40px;
-            overflow-y: auto;
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .main-inner {
+            width: 95%;
+            max-width: 700px;
         }
 
         .main h2 {
@@ -230,6 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             margin-bottom: 25px;
             color: #000;
             font-weight: 700;
+            text-align: center;
         }
 
         .update-box {
@@ -271,7 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             background: #d9d9d9;
             padding: 25px;
             border-radius: 10px;
-            max-width: 600px;
+            width: 100%;
         }
 
         .form-box label {
@@ -398,6 +429,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 
 
     <main class="main">
+        <div class="main-inner">
         <h2>Update Schedule</h2>
 
         <?php if ($selectedSchedule === null): ?>
@@ -417,53 +449,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
                     <input type="hidden" name="schedule_id" value="<?php echo htmlspecialchars($selectedSchedule['id']); ?>">
 
                     <label>Subject</label>
-                    <select name="subject">
-<?php foreach ($subjects as $subj): ?>
-    <option value="<?php echo $subj['id']; ?>"
-        <?php echo ($selectedSchedule['subject'] == $subj['id']) ? 'selected' : ''; ?>>
-        <?php echo $subj['course_code']; ?>
-    </option>
-<?php endforeach; ?>
-</select>
+                    <select name="subject" required>
+                        <option value="">Select a subject</option>
+                        <?php foreach ($subjects as $subj): ?>
+                            <option value="<?php echo $subj['id']; ?>"
+                                <?php echo ($selectedSchedule['subject'] == $subj['id']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($subj['course_code'] . ' - ' . $subj['description']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
 
-                   <select name="teacher">
-<?php foreach ($teachers as $t): ?>
-    <option value="<?php echo $t['instructor_id']; ?>"
-        <?php echo ($selectedSchedule['teacher'] == $t['instructor_id']) ? 'selected' : ''; ?>>
-        <?php echo $t['full_name']; ?>
-    </option>
-<?php endforeach; ?>
-</select>
+                    <label>Teacher</label>
+                    <select name="teacher" required>
+                        <option value="">Select a teacher</option>
+                        <?php foreach ($teachers as $t): ?>
+                            <option value="<?php echo $t['instructor_id']; ?>"
+                                <?php echo ($selectedSchedule['teacher'] == $t['instructor_id']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($t['full_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <label>Section</label>
+                    <select name="section" required>
+                        <option value="">Select a section</option>
+                        <?php foreach ($allSections as $sec): ?>
+                            <option value="<?php echo htmlspecialchars($sec); ?>"
+                                <?php echo ($selectedSchedule['section'] === $sec) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($sec); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
 
                     <label>Day</label>
-                    <select name="day">
-                        <option>Select a day</option>
+                    <select name="day" required>
+                        <option value="">Select a day</option>
                         <?php foreach ($days as $d): ?>
-                            <option value="<?php echo htmlspecialchars($d); ?>" <?php echo $selectedSchedule['day'] === $d ? 'selected' : ''; ?>>
+                            <option value="<?php echo htmlspecialchars($d); ?>"
+                                <?php echo ($selectedSchedule['day'] === $d) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($d); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
 
-                    <select name="classroom">
-<?php foreach ($classrooms as $r): ?>
-    <option value="<?php echo $r['id']; ?>"
-        <?php echo ($selectedSchedule['classroom'] == $r['id']) ? 'selected' : ''; ?>>
-        <?php echo $r['room_name']; ?>
-    </option>
-<?php endforeach; ?>
-</select>
+                    <label>Classroom</label>
+                    <select name="classroom" required>
+                        <option value="">Select a room</option>
+                        <?php foreach ($classrooms as $r): ?>
+                            <option value="<?php echo $r['id']; ?>"
+                                <?php echo ($selectedSchedule['classroom'] == $r['id']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($r['room_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
 
                     <div class="time-row">
                         <div>
                             <label>Start Time</label>
-<input type="time" name="start_time"
-value="<?php echo htmlspecialchars($selectedSchedule['start_time'] ?? ''); ?>">
+                            <input type="time" name="start_time" required
+                                value="<?php echo htmlspecialchars($selectedSchedule['start_time'] ?? ''); ?>">
                         </div>
                         <div>
                             <label>End Time</label>
-<input type="time" name="end_time"
-value="<?php echo htmlspecialchars($selectedSchedule['end_time'] ?? ''); ?>">                        </div>
+                            <input type="time" name="end_time" required
+                                value="<?php echo htmlspecialchars($selectedSchedule['end_time'] ?? ''); ?>">
+                        </div>
                     </div>
 
                     <div class="btn-row">
@@ -473,6 +523,7 @@ value="<?php echo htmlspecialchars($selectedSchedule['end_time'] ?? ''); ?>">   
                 </form>
             </div>
         <?php endif; ?>
+        </div>
     </main>
 </body>
 

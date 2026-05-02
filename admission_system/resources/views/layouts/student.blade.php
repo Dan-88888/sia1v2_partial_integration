@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSU - Student Portal | @yield('title', 'Admission')</title>
+    <title>@yield('title', config('app.name'))</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/PSU.png') }}">
     
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -15,7 +16,7 @@
     <header class="psu-blue-bg shadow-xl sticky top-0 z-50">
         <div class="container mx-auto px-4 md:px-6 py-3 md:py-4">
             <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <a href="{{ route('home') }}" class="flex items-center space-x-3 group flex-shrink-0">
+                <a href="#" onclick="window.parent.postMessage({action:'navigate-home'}, '*'); return false;" class="flex items-center space-x-3 group flex-shrink-0">
                     <div class="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-tr from-yellow-300 to-yellow-500 rounded-2xl p-0.5 shadow-lg group-hover:rotate-6 transition-transform">
                         <div class="w-full h-full bg-white rounded-[14px] flex items-center justify-center border-2 border-[#000035] overflow-hidden">
                             <img src="{{ asset('images/PSU_LOGO.png') }}" class="w-[85%] h-[85%] object-contain" alt="PSU Logo"
@@ -30,7 +31,7 @@
 
                 <!-- Nav — always visible, wraps on small screens -->
                 <nav class="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    <a href="{{ route('home') }}" class="text-[11px] md:text-xs font-black uppercase tracking-widest {{ request()->routeIs('home') ? 'text-yellow-400' : 'text-blue-100 hover:text-yellow-300 transition' }}">Home</a>
+                    <a href="#" onclick="window.parent.postMessage({action:'navigate-home'}, '*'); return false;" class="text-[11px] md:text-xs font-black uppercase tracking-widest text-blue-100 hover:text-yellow-300 transition">Home</a>
                     <a href="{{ route('student.apply') }}" class="text-[11px] md:text-xs font-black uppercase tracking-widest {{ request()->routeIs('student.apply') ? 'text-yellow-400' : 'text-blue-100 hover:text-yellow-300 transition' }}">New Application</a>
                     <a href="{{ route('student.track') }}" class="text-[11px] md:text-xs font-black uppercase tracking-widest {{ request()->is('student/track*') ? 'text-yellow-400' : 'text-blue-100 hover:text-yellow-300 transition' }}">Track Status</a>
                 </nav>

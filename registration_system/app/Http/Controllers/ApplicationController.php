@@ -194,12 +194,14 @@ class ApplicationController extends Controller
 
                 // Check if user already exists (idempotent check)
                 $user = User::where('email', $primaryEmail)->first();
-                
+
+                $recordedPassword = null; // initialize so it is always defined for the mail call
+
                 if (!$user) {
                     $user = User::create([
                         'name' => $application->name,
                         'email' => $primaryEmail,
-                        'password' => Hash::make('password123'), // Temporary, will be updated below
+                        'password' => Hash::make('placeholder'), // overwritten below per role
                         'role' => $application->type,
                         'birthdate' => $application->birthdate,
                         'contact' => $application->contact,
@@ -211,26 +213,26 @@ class ApplicationController extends Controller
                 if ($application->type === 'student') {
                     $suffix = str_pad($user->id, 4, '0', STR_PAD_LEFT);
                     $recordedPassword = $application->temp_password;
-                    
-                    // If for some reason it's missing (legacy), re-calculate
+
+                    // Always resolve the active school year for student_number
+                    $activeSY = \App\Models\Setting::getValue('active_school_year', date('Y'));
+                    $syParts  = explode('-', $activeSY);
+                    $shortSY  = substr(trim(end($syParts)), -2);
+
+                    // Re-calculate if missing (legacy records)
                     if (!$recordedPassword) {
-                        $fullNameParts = explode(' ', trim($application->name));
-                        $firstName = strtolower($fullNameParts[0]);
-                        $yearLevel = $application->year_level; 
-                        
-                        $activeSY = \App\Models\Setting::getValue('active_school_year', date('Y'));
-                        $syParts = explode('-', $activeSY);
-                        $shortSY = substr(trim(end($syParts)), -2);
+                        $fullNameParts    = explode(' ', trim($application->name));
+                        $firstName        = strtolower($fullNameParts[0]);
+                        $yearLevel        = $application->year_level;
                         $recordedPassword = $firstName . $yearLevel . $shortSY;
                     }
 
-                    // Update user with the recorded password
-                    $user->update(['password' => \Hash::make($recordedPassword)]);
+                    $user->update(['password' => Hash::make($recordedPassword)]);
 
                     Student::updateOrCreate(
                         ['user_id' => $user->id],
                         [
-                            'student_number' => 'STU-' . (isset($shortSY) ? '20'.$shortSY : date('Y')) . '-' . $suffix,
+                            'student_number' => 'STU-20' . $shortSY . '-' . $suffix,
                             'campus' => $application->campus,
                             'college' => $application->college,
                             'course' => $application->course,
@@ -240,24 +242,32 @@ class ApplicationController extends Controller
                         ]
                     );
                 } else {
+                    // Generate a deterministic temp password for teachers
+                    $nameParts        = explode(' ', trim($application->name));
+                    $firstName        = strtolower($nameParts[0] ?? 'teacher');
+                    $recordedPassword = 'Tch@' . ucfirst($firstName) . date('Y');
+
+                    $user->update(['password' => Hash::make($recordedPassword)]);
+
                     Teacher::updateOrCreate(
                         ['user_id' => $user->id],
                         [
-                            'teacher_id' => 'TCH-' . date('Y') . '-' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
-                            'campus' => $application->campus,
-                            'college' => $application->college,
-                            'department_id' => $application->college, // Use college as department_id for consistency
+                            'teacher_id'    => 'TCH-' . date('Y') . '-' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
+                            'campus'        => $application->campus,
+                            'college'       => $application->college,
+                            'department_id' => $application->college,
                         ]
                     );
                 }
 
                 $application->update([
-                    'status' => 'Approved',
-                    'email' => $primaryEmail,
+                    'status'        => 'Approved',
+                    'email'         => $primaryEmail,
+                    'temp_password' => $recordedPassword,
                 ]);
-                
+
                 try {
-                    Mail::to($application->email)->send(new ApplicationStatusUpdated($application, $recordedPassword ?? 'As previously communicated'));
+                    Mail::to($application->email)->send(new ApplicationStatusUpdated($application, $recordedPassword));
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::error('Approval email failed: ' . $e->getMessage());
                 }

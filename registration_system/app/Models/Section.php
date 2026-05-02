@@ -11,6 +11,8 @@ use App\Models\Enrollment;
 
 class Section extends Model
 {
+    protected $table = 'reg_sections';
+
     protected $fillable = [
         'subject_id', 'teacher_id', 'room_id', 'section_name', 
         'day', 'start_time', 'end_time', 'capacity', 'semester', 'school_year'

@@ -7,10 +7,38 @@ use App\Models\StudentApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use App\Mail\ApplicationSubmitted;
 
 class StudentController extends Controller
 {
+    public function checkDuplicate(Request $request)
+    {
+        $conflicts = [];
+
+        if ($request->filled('gmail_account')) {
+            $gmail = $request->gmail_account;
+            if (!str_contains($gmail, '@')) {
+                $gmail .= '@gmail.com';
+            }
+            $exists = StudentApplication::where('gmail_account', $gmail)->exists();
+            if ($exists) {
+                $conflicts['gmail_account'] = 'This Gmail address is already registered. Please use a different Gmail or track your existing application using your Application ID.';
+            }
+        }
+
+        if ($request->filled('firstname') && $request->filled('lastname')) {
+            $exists = StudentApplication::whereRaw('LOWER(firstname) = ?', [strtolower($request->firstname)])
+                ->whereRaw('LOWER(lastname) = ?', [strtolower($request->lastname)])
+                ->exists();
+            if ($exists) {
+                $conflicts['name'] = 'An application with this name already exists. If this is your application, use Track Application to check its status.';
+            }
+        }
+
+        return response()->json(['conflicts' => $conflicts]);
+    }
+
     public function showForm()
     {
         $campuses = Campus::with('colleges.courses')->get();
@@ -19,6 +47,10 @@ class StudentController extends Controller
 
     public function submitApplication(Request $request)
     {
+        if ($request->filled('gmail_account') && !str_contains($request->gmail_account, '@')) {
+            $request->merge(['gmail_account' => $request->gmail_account . '@gmail.com']);
+        }
+
         $validator = Validator::make($request->all(), array_merge(
             $this->applicationRules(),
             [
@@ -39,6 +71,9 @@ class StudentController extends Controller
         $birthCertPath = $request->hasFile('birth_certificate') ? $request->file('birth_certificate')->store('documents/birth_certificates', 'public') : null;
         $reportCardPath = $request->hasFile('report_card') ? $request->file('report_card')->store('documents/report_cards', 'public') : null;
 
+        $gmailInput = $request->gmail_account;
+        $gmailFull = ($gmailInput && !str_contains($gmailInput, '@')) ? $gmailInput . '@gmail.com' : $gmailInput;
+
         $application = StudentApplication::create([
             'firstname' => $request->firstname,
             'middlename' => $request->middlename,
@@ -50,7 +85,7 @@ class StudentController extends Controller
             'date_of_birth' => $request->date_of_birth,
             'birth_place' => $request->birth_place,
             'contact_number' => $request->contact_number,
-            'gmail_account' => $request->gmail_account,
+            'gmail_account' => $gmailFull,
             'temporary_address' => $request->temporary_address,
             'permanent_address' => $request->permanent_address,
             'guardian_name' => $request->guardian_name,
@@ -109,11 +144,18 @@ class StudentController extends Controller
                 ->with('error', 'Cannot edit application that is already ' . $application->status);
         }
 
+        if ($request->filled('gmail_account') && !str_contains($request->gmail_account, '@')) {
+            $request->merge(['gmail_account' => $request->gmail_account . '@gmail.com']);
+        }
+
         $validator = Validator::make($request->all(), $this->applicationRules((int) $id));
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
+
+        $gmailInput = $request->gmail_account;
+        $gmailFull = ($gmailInput && !str_contains($gmailInput, '@')) ? $gmailInput . '@gmail.com' : $gmailInput;
 
         $application->update([
             'firstname' => $request->firstname,
@@ -126,7 +168,7 @@ class StudentController extends Controller
             'date_of_birth' => $request->date_of_birth,
             'birth_place' => $request->birth_place,
             'contact_number' => $request->contact_number,
-            'gmail_account' => $request->gmail_account,
+            'gmail_account' => $gmailFull,
             'temporary_address' => $request->temporary_address,
             'permanent_address' => $request->permanent_address,
             'guardian_name' => $request->guardian_name,
@@ -157,20 +199,14 @@ class StudentController extends Controller
     public function lookupApplication(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'application_id' => 'required|string',
+            'application_id' => 'required|numeric|min:1',
         ]);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $appId = ltrim($request->application_id, '0');
-
-        if ($appId === '') {
-            return redirect()->back()
-                ->with('error', 'Invalid Application ID format.')
-                ->withInput();
-        }
+        $appId = (int) $request->application_id;
 
         $application = StudentApplication::find($appId);
 
@@ -187,8 +223,13 @@ class StudentController extends Controller
 
     private function applicationRules(int $excludeId = null): array
     {
-        $emailRule = 'nullable|email|unique:student_applications,gmail_account'
-            . ($excludeId ? ',' . $excludeId : '');
+        $emailRule = [
+            'nullable',
+            'email',
+            Rule::unique('adm_applications', 'gmail_account')
+                ->whereNull('deleted_at')
+                ->when($excludeId, fn ($rule) => $rule->ignore($excludeId)),
+        ];
 
         return [
             'firstname' => 'nullable|string|max:255',
@@ -207,10 +248,10 @@ class StudentController extends Controller
             'guardian_name' => 'nullable|string|max:255',
             'guardian_relationship' => 'nullable|in:Mother,Father,Brother,Sister,Grandmother,Grandfather,Auntie,Uncle,Legal Guardian',
             'guardian_phone' => ['nullable', 'regex:/^[0-9\+\-\s\(\)]{7,20}$/'],
-            'student_type' => 'nullable|in:Regular,Irregular,Transferee',
-            'campus' => 'nullable|string',
-            'college' => 'nullable|string',
-            'course' => 'nullable|string',
+            'student_type' => 'required|in:Regular,Irregular,Transferee',
+            'campus' => 'required|string',
+            'college' => 'required|string',
+            'course' => 'required|string',
         ];
     }
 

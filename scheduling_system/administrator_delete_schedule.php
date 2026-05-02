@@ -66,7 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schedule Management - Delete Schedule</title>
+    <title>SUSA - ParSU</title>
+    <link rel="icon" type="image/png" href="PSU.png">
     <style>
         * {
             margin: 0;
@@ -86,11 +87,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
         }
 
         body {
-            padding-top: 45px;
             background: #fdfdfd;
             display: flex;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            padding-top: 45px;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            width: 100%;
         }
 
         .sidebar {
@@ -100,6 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
             flex-direction: column;
             padding: 25px 15px;
             border-right: 1px solid #dee2e6;
+            position: sticky;
+            top: 45px;
+            height: calc(100vh - 45px);
+            overflow-y: auto;
         }
 
         .sidebar .header {
@@ -166,8 +176,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
 
         .main {
             flex: 1;
-            padding: 40px;
-            overflow-y: auto;
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .main-inner {
+            width: 95%;
         }
 
         .main h2 {
@@ -175,11 +191,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
             margin-bottom: 25px;
             color: #000;
             font-weight: 700;
+            text-align: center;
         }
 
         .delete-table {
             width: 100%;
-            max-width: 800px;
             border-collapse: collapse;
             margin-bottom: 20px;
             border: 1px solid #ddd;
@@ -344,7 +360,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
 
 
     <main class="main">
-
+        <div class="main-inner">
         <h2>Delete Schedule</h2>
 
         <?php if ($deleted): ?>
@@ -449,7 +465,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
             </form>
 
         <?php endif; ?>
-
+        </div>
     </main>
 
 </body>

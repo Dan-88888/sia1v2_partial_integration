@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSU - Edit Application</title>
+    <title>{{ config('app.name') }}</title>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
@@ -232,7 +232,7 @@
                                 </div>
                             </div>
                             
-                            <div class="grid md:grid-cols-3 gap-6 mt-4">
+                            <div class="grid md:grid-cols-2 gap-6 mt-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
                                         Contact Number <span class="text-red-500">*</span>
@@ -252,14 +252,6 @@
                                             @gmail.com
                                         </span>
                                     </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Cellphone Number <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" name="cellphone_number" value="{{ old('cellphone_number', $application->contact_number) }}" required
-                                           placeholder="09XXXXXXXXX"
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition">
                                 </div>
                             </div>
                             
@@ -570,6 +562,15 @@
         window.addEventListener('load', function() {
             const event = new Event('change');
             campusSelect.dispatchEvent(event);
+        });
+
+        // Prevent double-submit
+        document.querySelector('form').addEventListener('submit', function () {
+            var btn = this.querySelector('button[type="submit"]');
+            if (btn && !btn.disabled) {
+                btn.disabled = true;
+                btn.innerHTML = '<svg class="w-5 h-5 mr-2 animate-spin inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Saving…';
+            }
         });
     </script>
 

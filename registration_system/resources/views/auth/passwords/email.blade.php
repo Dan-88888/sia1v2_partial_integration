@@ -39,7 +39,7 @@
                 </form>
             </div>
 
-            <a href="{{ route('login') }}" style="display:block; margin-top:20px; color:var(--text-light); font-size:0.85rem; text-decoration:none; font-weight:600;">
+            <a href="{{ url('/') }}?role={{ request('role', 'student') }}" style="display:block; margin-top:20px; color:var(--text-light); font-size:0.85rem; text-decoration:none; font-weight:600;">
                 <i class="fas fa-arrow-left"></i> Back to Login
             </a>
         </div>

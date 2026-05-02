@@ -75,6 +75,40 @@
                     </div>
                 </div>
 
+                <div class="col-md-6">
+                    <div class="form-modern-group">
+                        <label class="form-modern-label">Campus</label>
+                        <select name="campus" class="form-modern-input">
+                            <option value="">— Select Campus —</option>
+                            @foreach($campuses as $campus)
+                                <option value="{{ $campus }}" {{ old('campus', $teacher->campus) == $campus ? 'selected' : '' }}>
+                                    {{ $campus }}
+                                </option>
+                            @endforeach
+                            @if($teacher->campus && !$campuses->contains($teacher->campus))
+                                <option value="{{ $teacher->campus }}" selected>{{ $teacher->campus }}</option>
+                            @endif
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-modern-group">
+                        <label class="form-modern-label">College</label>
+                        <select name="college" class="form-modern-input">
+                            <option value="">— Select College —</option>
+                            @foreach($colleges as $college)
+                                <option value="{{ $college }}" {{ old('college', $teacher->college) == $college ? 'selected' : '' }}>
+                                    {{ $college }}
+                                </option>
+                            @endforeach
+                            @if($teacher->college && !$colleges->contains($teacher->college))
+                                <option value="{{ $teacher->college }}" selected>{{ $teacher->college }}</option>
+                            @endif
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Actions -->
                 <div class="col-12 mt-4">
                     <div class="d-flex gap-3 justify-content-end">

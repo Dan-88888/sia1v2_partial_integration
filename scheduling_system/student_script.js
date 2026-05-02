@@ -116,9 +116,10 @@ function initButtons() {
     const logoutBtn = document.querySelector('.btn-logout');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            if (confirm("Are you sure you want to Logout?")) {
-                window.location.href = 'role_selection.html';
-            }
+            fetch('student_logout.php', { credentials: 'include', redirect: 'manual' })
+                .finally(() => {
+                    window.top.location.href = 'http://localhost:3000';
+                });
         });
     }
 

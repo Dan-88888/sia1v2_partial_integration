@@ -37,8 +37,8 @@ class ReportController extends Controller
 
         // For historical view, get all distinct semesters/years student has enrollments for
         $periods = Enrollment::where('student_id', $student->id)
-            ->join('sections', 'enrollments.section_id', '=', 'sections.id')
-            ->select('sections.semester', 'sections.school_year')
+            ->join('reg_sections', 'reg_enrollments.section_id', '=', 'reg_sections.id')
+            ->select('reg_sections.semester', 'reg_sections.school_year')
             ->distinct()
             ->orderBy('school_year', 'desc')
             ->orderBy('semester', 'desc')

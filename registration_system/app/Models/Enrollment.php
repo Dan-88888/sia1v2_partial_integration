@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Enrollment extends Model
 {
+    protected $table = 'reg_enrollments';
+
     protected $fillable = [
         'student_id', 'section_id', 'status', 'enrollment_date'
     ];

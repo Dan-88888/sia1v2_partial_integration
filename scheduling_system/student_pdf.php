@@ -36,7 +36,8 @@ $schedules = $stmt->fetchAll();
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Class Schedule PDF</title>
+    <title>SUSA - ParSU</title>
+    <link rel="icon" type="image/png" href="PSU.png">
     <style>
         body { font-family: Arial; }
         table { width: 100%; border-collapse: collapse; }

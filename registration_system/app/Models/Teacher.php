@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Teacher extends Model
 {
+    protected $table = 'reg_teachers';
+
     protected $fillable = [
         'user_id',
         'teacher_id',

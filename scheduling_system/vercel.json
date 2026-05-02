@@ -1,0 +1,18 @@
+{
+  "functions": {
+    "login.php":                          { "runtime": "vercel-php@0.6.2" },
+    "student_login.php":                  { "runtime": "vercel-php@0.6.2" },
+    "administrator_assign_subject.php":   { "runtime": "vercel-php@0.6.2" },
+    "administrator_create_schedule.php":  { "runtime": "vercel-php@0.6.2" },
+    "administrator_view_schedule.php":    { "runtime": "vercel-php@0.6.2" },
+    "administrator_validate_schedule.php":{ "runtime": "vercel-php@0.6.2" },
+    "administrator_update_schedule.php":  { "runtime": "vercel-php@0.6.2" },
+    "administrator_delete_schedule.php":  { "runtime": "vercel-php@0.6.2" },
+    "api.php":                            { "runtime": "vercel-php@0.6.2" },
+    "student_pdf.php":                    { "runtime": "vercel-php@0.6.2" },
+    "logout.php":                         { "runtime": "vercel-php@0.6.2" }
+  },
+  "routes": [
+    { "src": "/inc/(.*)", "status": 403, "headers": { "Content-Type": "text/plain" } }
+  ]
+}

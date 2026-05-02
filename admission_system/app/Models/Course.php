@@ -10,6 +10,8 @@ class Course extends Model
 {
     use HasFactory;
 
+    protected $table = 'adm_courses';
+
     protected $fillable = ['college_id', 'name'];
 
     public function college(): BelongsTo
