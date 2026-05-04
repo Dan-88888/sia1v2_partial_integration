@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
-    showSection('dashboard');
+    const hash = window.location.hash.slice(1);
+    const valid = ['dashboard', 'assigned'];
+    showSection(valid.includes(hash) ? hash : 'dashboard');
 });
 
 function showSection(sectionId) {
@@ -12,6 +14,8 @@ function showSection(sectionId) {
 
     document.querySelectorAll('.nav-btn')
         .forEach(btn => btn.classList.remove('active'));
+
+    history.replaceState(null, '', '#' + sectionId);
 
     if (sectionId === 'dashboard') {
         document.getElementById('btn-dashboard')?.classList.add('active');
@@ -80,4 +84,3 @@ function loadAssignedClasses() {
         })
         .catch(err => console.error(err));
 }
-

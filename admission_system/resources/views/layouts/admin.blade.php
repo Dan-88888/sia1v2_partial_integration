@@ -97,6 +97,10 @@
         }
         if (openBtn) openBtn.addEventListener('click', openSidebar);
         if (overlay) overlay.addEventListener('click', closeSidebar);
+
+        if (window !== window.parent) {
+            window.parent.postMessage({ action: 'iframe-nav', url: window.location.href, status: 200 }, '*');
+        }
     })();
     </script>
 </body>

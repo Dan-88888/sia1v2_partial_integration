@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SUSA – ParSU System Integration</title>
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN SYSTEM
+   Navy #080d22 · Gold #c9a227 · White #fff
+═══════════════════════════════════════════ */
+:root{
+  --n0:#030710; --n1:#080d22; --n2:#0f1840; --n3:#1a2660; --n4:#253580;
+  --g1:#c9a227; --g2:#e8c050; --g3:#f8e090;
+  --w0:#ffffff; --w1:#f5f7ff; --w2:#eaedff; --w3:#dde2ff;
+  --bl:#3a6aff; --gr:#20b870; --rd:#e03535; --or:#e07520;
+  --mu:#6878b0;
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+  --ease-in:cubic-bezier(0.7,0,1,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:var(--n0);font-size:19px;}
+
+/* ─── DECK ─── */
+.deck{position:relative;width:100vw;height:100vh;}
+
+/* ─── SLIDE BASE ─── */
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  will-change:transform,opacity;
+}
+.slide.active{
+  opacity:1;pointer-events:all;
+  animation:slideIn .28s var(--ease-out) both;
+}
+.slide.leaving{
+  opacity:0;pointer-events:none;
+  animation:slideOut .2s var(--ease-in) both;
+}
+
+@keyframes slideIn{
+  from{opacity:0;transform:translateX(var(--enter,60px));}
+  to{opacity:1;transform:translateX(0);}
+}
+@keyframes slideOut{
+  from{opacity:1;transform:translateX(0);}
+  to{opacity:0;transform:translateX(var(--leave,-60px));}
+}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(22px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes fadeIn{
+  from{opacity:0;}to{opacity:1;}
+}
+@keyframes scaleIn{
+  from{opacity:0;transform:scale(.92);}
+  to{opacity:1;transform:scale(1);}
+}
+
+/* stagger helpers */
+.slide.active .a0{animation:fadeUp .3s var(--ease-out) .0s both;}
+.slide.active .a1{animation:fadeUp .3s var(--ease-out) .04s both;}
+.slide.active .a2{animation:fadeUp .3s var(--ease-out) .08s both;}
+.slide.active .a3{animation:fadeUp .3s var(--ease-out) .12s both;}
+.slide.active .a4{animation:fadeUp .3s var(--ease-out) .16s both;}
+.slide.active .a5{animation:fadeUp .3s var(--ease-out) .20s both;}
+.slide.active .a6{animation:fadeUp .3s var(--ease-out) .24s both;}
+.slide.active .as{animation:scaleIn .32s var(--ease-out) .03s both;}
+
+/* ═══ TOPBAR ═══ */
+.bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:46px;flex-shrink:0;
+  background:var(--n1);border-bottom:2px solid var(--g1);
+}
+.bar-l{display:flex;align-items:center;gap:10px;}
+.bar-seal{display:none;}
+.bar-name{font-size:.95rem;font-weight:700;color:rgba(255,255,255,.85);letter-spacing:.05em;}
+.bar-name em{color:var(--g1);font-style:normal;}
+.bar-r{font-size:.82rem;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;}
+
+/* ═══ CONTENT AREA TYPES ═══ */
+
+/* -- LIGHT (default content) -- */
+.lt{flex:1;background:var(--w1);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.lt::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(8,13,34,.045) 1px,transparent 1px);
+  background-size:22px 22px;z-index:0;
+}
+.lt>*{position:relative;z-index:1;}
+
+/* -- DARK -- */
+.dk{flex:1;background:var(--n1);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.dk::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 55% at 90% 10%,rgba(37,53,128,.6) 0%,transparent 55%),
+    radial-gradient(ellipse 50% 45% at 5% 90%,rgba(15,24,64,.8) 0%,transparent 60%);
+  z-index:0;
+}
+.dk>*{position:relative;z-index:1;}
+
+/* ─ SPLIT layout: left dark panel + right light ─ */
+.split{flex:1;display:flex;overflow:hidden;}
+.split-l{
+  width:26%;background:var(--n1);
+  display:flex;flex-direction:column;justify-content:center;
+  padding:32px 24px;flex-shrink:0;position:relative;overflow:hidden;
+}
+.split-l::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 120% 80% at 50% 100%,rgba(37,53,128,.5) 0%,transparent 60%);
+  pointer-events:none;
+}
+.split-l>*{position:relative;z-index:1;}
+.split-r{
+  flex:1;background:var(--w1);
+  display:flex;flex-direction:column;overflow:hidden;padding:28px 32px;
+  position:relative;
+}
+.split-r::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(8,13,34,.04) 1px,transparent 1px);
+  background-size:22px 22px;z-index:0;
+}
+.split-r>*{position:relative;z-index:1;}
+
+/* Decorative big number */
+.deco-num{
+  position:absolute;bottom:-20px;right:-10px;
+  font-size:9rem;font-weight:900;
+  color:rgba(255,255,255,.04);line-height:1;
+  pointer-events:none;user-select:none;
+}
+
+/* ─ section label (rotated, inside split-l) ─ */
+.sec-tag{
+  font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--g1);font-weight:700;margin-bottom:12px;
+}
+.sec-num{
+  font-size:3.5rem;font-weight:900;color:rgba(255,255,255,.12);
+  line-height:1;margin-bottom:8px;
+}
+.sec-title{font-size:1.2rem;font-weight:800;color:var(--w0);line-height:1.3;}
+.sec-sub{font-size:.76rem;color:rgba(255,255,255,.45);margin-top:8px;line-height:1.5;}
+
+/* ─ Slide inner heading ─ */
+.stitle{font-size:1.5rem;font-weight:900;color:var(--n1);line-height:1.2;}
+.ssub{font-size:.78rem;color:var(--mu);margin-top:3px;}
+.hdiv{height:2.5px;border-radius:2px;background:linear-gradient(to right,var(--n1),var(--g1),transparent);margin:10px 0 18px;flex-shrink:0;}
+
+/* ─ text helpers ─ */
+h3{font-size:.92rem;font-weight:700;color:var(--n1);margin-bottom:5px;}
+p{font-size:.82rem;line-height:1.65;color:#3a4870;}
+strong{color:var(--n1);font-weight:700;}
+code{background:var(--w2);padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:.8em;color:var(--bl);}
+
+/* ─ grids ─ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.g23{display:grid;grid-template-columns:2fr 3fr;gap:14px;}
+.g32{display:grid;grid-template-columns:3fr 2fr;gap:14px;}
+
+/* ─ cards ─ */
+.card{background:var(--w0);border:1.5px solid #d8dffa;border-radius:12px;padding:14px 16px;box-shadow:0 2px 10px rgba(8,13,34,.07);}
+.card-dk{background:var(--n2);border-color:var(--n3);}
+.card-dk h3{color:var(--g2);}
+.card-dk p{color:rgba(255,255,255,.7);}
+.bv-gold{border-color:var(--g1)!important;border-width:2px!important;}
+.bv-blue{border-color:var(--bl)!important;border-width:2px!important;}
+.bv-grn{border-color:var(--gr)!important;border-width:2px!important;}
+.bv-red{border-color:var(--rd)!important;border-width:2px!important;}
+.bv-org{border-color:var(--or)!important;border-width:2px!important;}
+
+/* ─ badge ─ */
+.badge{display:inline-block;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 9px;border-radius:99px;margin-bottom:6px;}
+.bx-nv{background:var(--n1);color:var(--g1);}
+.bx-gd{background:#fef3c7;color:#92600a;}
+.bx-gr{background:#d1fae5;color:#065f46;}
+.bx-bl{background:#dbeafe;color:#1e40af;}
+.bx-rd{background:#fee2e2;color:#991b1b;}
+.bx-or{background:#ffedd5;color:#9a3412;}
+
+/* ─ table ─ */
+table{width:100%;border-collapse:collapse;font-size:.77rem;}
+thead th{background:var(--n1);color:var(--g1);padding:8px 11px;text-align:left;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;}
+tbody td{padding:7px 11px;border-bottom:1px solid #dde3f8;color:#3a4870;}
+tbody tr:nth-child(even) td{background:#f8faff;}
+tbody tr:hover td{background:var(--w2);}
+
+/* ─ code block ─ */
+.pre{background:var(--n1);border-radius:10px;padding:14px 16px;font-family:Consolas,monospace;font-size:.73rem;line-height:1.65;color:#a8d4b0;overflow:auto;}
+.ck{color:#e8a868;} .cs{color:#7ecf7e;} .cc{color:#4a7a55;font-style:italic;} .cp{color:#68bcde;}
+
+/* ─ dot status ─ */
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.dok{background:var(--gr);} .dwn{background:var(--or);} .derr{background:var(--rd);}
+
+/* ─ item list ─ */
+.il{list-style:none;}
+.il li{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #dde3f8;font-size:.8rem;color:#3a4870;align-items:flex-start;}
+.il li:last-child{border-bottom:none;}
+.il .lb{color:var(--n1);font-weight:700;min-width:90px;flex-shrink:0;font-size:.75rem;}
+
+/* ─ OBJECTIVE item ─ */
+.obj{display:flex;gap:14px;align-items:flex-start;background:var(--w0);border:1.5px solid #d8dffa;border-radius:12px;padding:14px 16px;box-shadow:0 2px 8px rgba(8,13,34,.05);}
+.obj-n{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--n1);color:var(--g1);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;}
+.obj h4{font-size:.9rem;font-weight:700;color:var(--n1);margin-bottom:3px;}
+.obj p{font-size:.78rem;}
+
+/* ─ CHALLENGE item ─ */
+.chal{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid #dde3f8;}
+.chal:last-child{border-bottom:none;}
+.chal-n{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:var(--n1);color:var(--g1);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;margin-top:2px;}
+.chal h4{font-size:.84rem;font-weight:700;color:var(--n1);margin-bottom:2px;}
+.chal p{font-size:.76rem;}
+
+/* ─ scrollable ─ */
+.scroll{overflow-y:auto;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--n3);border-radius:3px;}
+
+/* ─ FLOW timeline item ─ */
+.fstep{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--w0);border:1.5px solid #d8dffa;
+  border-left:4px solid var(--leftcol,var(--n1));
+  border-radius:0 12px 12px 0;padding:11px 14px;
+}
+.fstep-n{width:28px;height:28px;border-radius:50%;flex-shrink:0;background:var(--n1);color:var(--g1);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:900;}
+.fstep h4{font-size:.86rem;font-weight:700;color:var(--n1);margin-bottom:2px;}
+.fstep p{font-size:.76rem;}
+
+/* ═══ PROGRESS / NAV ═══ */
+.pgbar{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.07);z-index:200;}
+.pgfill{height:100%;background:var(--g1);transition:width .35s ease;}
+
+.dots{
+  position:fixed;bottom:12px;left:50%;transform:translateX(-50%);
+  display:flex;gap:6px;z-index:200;align-items:center;
+}
+.dot-nav{
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(255,255,255,.2);
+  transition:background .3s ease,width .3s ease;
+  cursor:pointer;
+}
+.dot-nav.on{background:var(--g1);width:18px;border-radius:3px;}
+
+.pgcount{position:fixed;bottom:10px;left:20px;font-size:.6rem;color:rgba(255,255,255,.22);z-index:200;letter-spacing:.1em;}
+.pghint{position:fixed;bottom:10px;right:20px;font-size:.6rem;color:rgba(255,255,255,.2);z-index:200;}
+
+/* ═══════════════════════
+   COVER SLIDE SPECIFICS
+═══════════════════════ */
+#s0 .dk{
+  flex:1;flex-direction:column;align-items:center;justify-content:center;padding:36px 80px;
+  background:#f5f7ff;
+}
+#s0 .dk::before{
+  background:radial-gradient(ellipse 60% 50% at 50% 100%,rgba(37,53,128,.06) 0%,transparent 70%);
+}
+.cv-left{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  max-width:760px;width:100%;
+}
+.cv-right{
+  width:100%;max-width:760px;
+  border-top:1px solid rgba(8,13,34,.1);
+  padding:20px 0 0;margin-top:28px;
+  display:flex;flex-direction:row;justify-content:space-between;align-items:flex-start;
+  background:transparent;
+}
+.cv-eye{font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;color:var(--n1);font-weight:700;margin-bottom:20px;opacity:.5;}
+.cv-title{font-size:2.2rem;font-weight:900;color:var(--n1);line-height:1.15;margin-bottom:12px;}
+.cv-title span{color:var(--g1);}
+.cv-desc{font-size:.85rem;color:var(--mu);line-height:1.7;margin-bottom:0;}
+.cv-pills{display:none;}
+.cpill{display:none;}
+.cv-tlabel{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mu);font-weight:700;margin-bottom:10px;}
+.cv-mem{font-size:.84rem;color:var(--n1);padding:2px 0;line-height:1.6;opacity:.8;}
+.cv-prof{font-size:.76rem;color:var(--mu);}
+.cv-prof strong{color:var(--n1);display:block;font-size:.8rem;margin-bottom:2px;font-weight:800;}
+#s0 .cv-right{flex-direction:column;align-items:center;gap:14px;}
+
+/* ═══ CLOSING SLIDE ═══ */
+#s15 .dk{flex:1;align-items:center;justify-content:center;padding:40px 60px;}
+.close-inner{text-align:center;max-width:820px;}
+.close-eye{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--g1);font-weight:700;margin-bottom:20px;}
+.close-h{font-size:3rem;font-weight:900;color:var(--w0);line-height:1.1;margin-bottom:14px;}
+.close-h span{color:var(--g1);}
+.close-p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.8;margin-bottom:36px;max-width:580px;margin-left:auto;margin-right:auto;}
+.close-pills{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:40px;}
+.close-grid{display:flex;justify-content:center;gap:32px;font-size:.76rem;color:rgba(255,255,255,.4);}
+.close-grid div strong{color:rgba(255,255,255,.7);display:block;margin-bottom:2px;}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- S0 · COVER -->
+<div class="slide active" id="s0">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>PARTIDO STATE UNIVERSITY</em> · Goa, Camarines Sur</div></div>
+    <div class="bar-r">SUSA 1.0.0</div>
+  </div>
+  <div class="dk">
+    <div class="cv-left">
+      <div class="cv-eye a0">SIA 1 Final Project · May 2026</div>
+      <div class="cv-title a1">A State University System for Academics:<br/><span>Integration</span> of Admission,<br/>Registration &amp; Scheduling</div>
+    </div>
+    <div class="cv-right a1">
+      <div style="display:flex;gap:48px;align-items:flex-start;justify-content:center;width:100%;">
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div class="cv-tlabel" style="margin-bottom:8px;">Submitted by</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 48px;">
+            <div class="cv-mem">Palaypayon, Danreb R.</div>
+            <div class="cv-mem">Pelaez, Benito Jr. P.</div>
+            <div class="cv-mem">Pancho, Roswell D.</div>
+            <div class="cv-mem">Peña, Julius P.</div>
+            <div class="cv-mem">Paraiso, Janelle Cara V.</div>
+            <div class="cv-mem">Peñas, Farrah C. V.</div>
+            <div class="cv-mem">Pascua, K. Charme M.</div>
+            <div class="cv-mem">Perillo, Kyla R.</div>
+            <div class="cv-mem">Patoc, Angel Mae C.</div>
+            <div class="cv-mem">Pesimo, Christoph L. B.</div>
+            <div class="cv-mem">Peteza, Arlan V.</div>
+          </div>
+        </div>
+        <div class="cv-prof" style="text-align:right;flex-shrink:0;">
+          Submitted to:<br/>
+          <strong>Salvador V. Briones II</strong>
+          <span style="display:block;margin-top:2px;">Associate Professor II</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S1 · BACKGROUND -->
+<div class="slide" id="s1">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Background</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">01 / Background</div>
+      <div class="sec-num a1">01</div>
+      <div class="sec-title a2">The Problem at ParSU</div>
+      <div class="sec-sub a3">Three systems. No connection. Manual everything.</div>
+      <div class="deco-num">01</div>
+    </div>
+    <div class="split-r">
+      <div class="stitle a0">Before This Project</div>
+      <div class="ssub a1">Admission, Registration &amp; Scheduling worked in complete isolation</div>
+      <div class="hdiv a1"></div>
+      <div class="g2" style="flex:1;gap:12px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="card bv-red a2">
+            <div class="badge bx-rd">Problem</div>
+            <h3>Manual &amp; Isolated Processes</h3>
+            <ul class="il" style="margin-top:6px;">
+              <li>Each system works independently — no data sharing</li>
+              <li>Student data re-entered manually in every system</li>
+              <li>Mismatches and duplicates across records</li>
+            </ul>
+          </div>
+          <div class="card bv-red a3">
+            <div class="badge bx-rd">Impact</div>
+            <h3>Data Integrity at Risk</h3>
+            <ul class="il" style="margin-top:6px;">
+              <li>Same student, different data per system</li>
+              <li>Accuracy of records constantly questioned</li>
+              <li>Server downtimes during <strong>ParSUCAT</strong></li>
+            </ul>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="card bv-gold a2">
+            <div class="badge bx-gd">Existing Tools at ParSU</div>
+            <h3>Each Works Alone</h3>
+            <ul class="il" style="margin-top:6px;">
+              <li><span class="lb">SIAS</span>Student Info &amp; Accounting</li>
+              <li><span class="lb">OSCS</span>Online Student Clearance</li>
+              <li><span class="lb">Online Admission</span>Standalone portal</li>
+              <li><span class="lb">Online Enrollment</span>Standalone system</li>
+              <li><span class="lb">ParSUCAT</span>Admissions Test system</li>
+            </ul>
+          </div>
+          <div class="card card-dk a3">
+            <div class="badge bx-nv">Our Solution</div>
+            <h3>Connect All Three</h3>
+            <ul class="il" style="margin-top:6px;">
+              <li style="color:rgba(255,255,255,.7);">One unified platform with a shared database</li>
+              <li style="color:rgba(255,255,255,.7);">Data entered once, visible everywhere</li>
+              <li style="color:rgba(255,255,255,.7);">Consistent, accurate student records</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S2 · OBJECTIVES -->
+<div class="slide" id="s2">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Objectives</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">02 / Objectives</div>
+      <div class="sec-num a1">02</div>
+      <div class="sec-title a2">Project Goals</div>
+      <div class="sec-sub a3">Four objectives from the approved proposal</div>
+      <div class="deco-num">02</div>
+    </div>
+    <div class="split-r">
+      <div class="stitle a0">What This Project Aims to Accomplish</div>
+      <div class="ssub a1">From the approved project proposal</div>
+      <div class="hdiv a1"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:10px;justify-content:center;">
+        <div class="obj a2">
+          <div class="obj-n">1</div>
+          <div>
+            <h4>Integrate the Three Academic Systems</h4>
+            <p>Connect Admission, Registration, and Scheduling into one cohesive platform.</p>
+          </div>
+        </div>
+        <div class="obj a3">
+          <div class="obj-n">2</div>
+          <div>
+            <h4>Centralized Database for Consistency &amp; Integrity</h4>
+            <p>One shared database — data entered once, consistent and accurate across all departments.</p>
+          </div>
+        </div>
+        <div class="obj a4">
+          <div class="obj-n">3</div>
+          <div>
+            <h4>Efficient Operations Across All Departments</h4>
+            <p>Reduce manual work, minimize errors, and streamline the academic workflow.</p>
+          </div>
+        </div>
+        <div class="obj a5">
+          <div class="obj-n">4</div>
+          <div>
+            <h4>Assess User Satisfaction via Testing &amp; Feedback</h4>
+            <p>Validate the system with real users — students and administrative staff.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S3 · SCOPE -->
+<div class="slide" id="s3">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Scope &amp; Delimitation</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">03 / Scope</div>
+      <div class="sec-num a1">03</div>
+      <div class="sec-title a2">Scope &amp; Delimitation</div>
+      <div class="sec-sub a3">ParSU Goa Campus · Internal use only</div>
+      <div class="deco-num">03</div>
+    </div>
+    <div class="split-r">
+      <div class="stitle a0">Boundaries of This Project</div>
+      <div class="ssub a1">What's included — and what's not</div>
+      <div class="hdiv a1"></div>
+      <div class="g2" style="flex:1;gap:12px;">
+        <div class="a2">
+          <div style="font-size:.68rem;font-weight:700;color:var(--gr);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">✓ In Scope</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="background:var(--w0);border:1.5px solid #b8f0d4;border-left:4px solid var(--gr);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.8rem;color:#3a4870;">Integration of all 3 systems</div>
+            <div style="background:var(--w0);border:1.5px solid #b8f0d4;border-left:4px solid var(--gr);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.8rem;color:#3a4870;">Centralized database for data sharing</div>
+            <div style="background:var(--w0);border:1.5px solid #b8f0d4;border-left:4px solid var(--gr);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.8rem;color:#3a4870;">Unified frontend with role-based access</div>
+            <div style="background:var(--w0);border:1.5px solid #b8f0d4;border-left:4px solid var(--gr);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.8rem;color:#3a4870;">ParSU Goa Campus only</div>
+            <div style="background:var(--w0);border:1.5px solid #b8f0d4;border-left:4px solid var(--gr);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.8rem;color:#3a4870;">Users: Admin, Students, Instructors</div>
+          </div>
+        </div>
+        <div class="a3">
+          <div style="font-size:.68rem;font-weight:700;color:var(--rd);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">✗ Not in Scope</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="background:var(--w0);border:1.5px solid #fdc8c8;border-left:4px solid var(--rd);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.8rem;color:#3a4870;">External / government integrations</div>
+            <div style="background:var(--w0);border:1.5px solid #fdc8c8;border-left:4px solid var(--rd);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.8rem;color:#3a4870;">Financial &amp; accounting modules</div>
+            <div style="background:var(--w0);border:1.5px solid #fdc8c8;border-left:4px solid var(--rd);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.8rem;color:#3a4870;">Mobile application</div>
+            <div style="background:var(--w0);border:1.5px solid #fdc8c8;border-left:4px solid var(--rd);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.8rem;color:#3a4870;">Other ParSU campuses</div>
+          </div>
+          <div class="card card-dk a4" style="margin-top:10px;">
+            <div class="badge bx-nv">Access</div>
+            <h3>Internal Use Only</h3>
+            <p>Authorized ParSU staff and students only — not a public-facing website.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     S4 · CONCEPTUAL DESIGN
+════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Conceptual Design</div>
+  </div>
+  <div class="lt" style="padding:28px 44px;">
+    <div class="stitle a0">Conceptual Design <span style="font-size:1rem;color:var(--mu);font-weight:500;">— Figure 1</span></div>
+    <div class="ssub a1">The proposed high-level architecture of the integrated system</div>
+    <div class="hdiv a1"></div>
+    <div style="flex:1;display:flex;align-items:center;gap:40px;">
+
+      <!-- DIAGRAM -->
+      <div class="as" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <!-- USER -->
+        <div style="background:var(--n1);color:var(--g1);font-weight:700;font-size:.85rem;padding:11px 50px;border-radius:8px;border:2px solid var(--g1);letter-spacing:.06em;">USER</div>
+        <div style="color:var(--n1);font-size:1.2rem;font-weight:900;line-height:1;">↓</div>
+        <!-- SYSTEM INTERFACE -->
+        <div style="background:var(--w0);border:2px solid var(--n1);border-radius:8px;padding:11px 38px;font-weight:700;font-size:.82rem;color:var(--n1);text-align:center;line-height:1.4;box-shadow:0 2px 8px rgba(8,13,34,.1);">SYSTEM<br/>INTERFACE</div>
+        <div style="color:var(--n1);font-size:1.2rem;font-weight:900;line-height:1;">↓</div>
+        <!-- INTEGRATED SYSTEM dashed box -->
+        <div style="border:2.5px dashed var(--n3);border-radius:12px;padding:16px 24px;width:100%;max-width:460px;background:rgba(8,13,34,.02);">
+          <div style="font-size:.62rem;font-weight:700;color:var(--mu);letter-spacing:.18em;text-transform:uppercase;text-align:center;margin-bottom:12px;">Integrated System</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:0;">
+            <div style="background:var(--w0);border:2px solid var(--n1);border-radius:8px;padding:10px 18px;font-size:.8rem;font-weight:700;color:var(--n1);text-align:center;box-shadow:0 2px 6px rgba(8,13,34,.08);">ADMISSION</div>
+            <div style="color:var(--n1);font-size:1rem;font-weight:900;padding:0 10px;">↔</div>
+            <div style="background:var(--w0);border:2px solid var(--n1);border-radius:8px;padding:10px 18px;font-size:.8rem;font-weight:700;color:var(--n1);text-align:center;box-shadow:0 2px 6px rgba(8,13,34,.08);">REGISTRATION</div>
+            <div style="color:var(--n1);font-size:1rem;font-weight:900;padding:0 10px;">↔</div>
+            <div style="background:var(--w0);border:2px solid var(--n1);border-radius:8px;padding:10px 18px;font-size:.8rem;font-weight:700;color:var(--n1);text-align:center;box-shadow:0 2px 6px rgba(8,13,34,.08);">SCHEDULING</div>
+          </div>
+        </div>
+        <div style="color:var(--n1);font-size:1.2rem;font-weight:900;line-height:1;">↕</div>
+        <!-- CENTRALIZED DB cylinder -->
+        <div style="text-align:center;">
+          <div style="background:var(--n2);height:10px;border-radius:50% 50% 0 0 / 7px;width:200px;margin:0 auto;"></div>
+          <div style="background:var(--w0);border-left:2px solid var(--n1);border-right:2px solid var(--n1);padding:10px 20px;width:200px;margin:0 auto;">
+            <div style="font-size:.8rem;font-weight:700;color:var(--n1);text-align:center;line-height:1.4;">CENTRALIZED<br/>DATABASE</div>
+          </div>
+          <div style="background:var(--n2);height:10px;border-radius:0 0 50% 50% / 7px;width:200px;margin:0 auto;"></div>
+        </div>
+      </div>
+
+      <!-- EXPLANATION -->
+      <div style="width:40%;display:flex;flex-direction:column;gap:10px;">
+        <div class="card bv-gold a2">
+          <div class="badge bx-gd">Figure 1</div>
+          <h3>Proposed Architecture</h3>
+          <p>Each box is a system component. Arrows show how data flows between them.</p>
+        </div>
+        <div class="card a3">
+          <h3 style="color:var(--bl);">User → System Interface</h3>
+          <p>Single entry point — one login, routed to the right system by role.</p>
+        </div>
+        <div class="card a4">
+          <h3>Admission ↔ Registration ↔ Scheduling</h3>
+          <p><code>↔</code> = data flows both ways automatically between systems.</p>
+        </div>
+        <div class="card bv-grn a5">
+          <h3 style="color:var(--gr);">Centralized Database</h3>
+          <p>One shared DB — enter data once in Admission, all systems see it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S5 · WHAT IS SYSTEM INTEGRATION? -->
+<div class="slide" id="s5">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Key Concept</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">04 / Concept</div>
+      <div class="sec-num a1">04</div>
+      <div class="sec-title a2">What Is System Integration?</div>
+      <div class="sec-sub a3">No prior IT knowledge needed</div>
+      <div class="deco-num">04</div>
+    </div>
+    <div class="split-r">
+      <div class="stitle a0">Connecting Separate Systems into One</div>
+      <div class="ssub a1">Three isolated apps → one unified platform</div>
+      <div class="hdiv a1"></div>
+      <div class="g2" style="flex:1;gap:12px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="card card-dk a2">
+            <div class="badge bx-nv">Definition</div>
+            <h3>System Integration</h3>
+            <p>Linking separate software so they <strong style="color:var(--g2);">share data and work as one</strong> — even if built by different teams.</p>
+          </div>
+          <div class="card bv-gold a3">
+            <div class="badge bx-gd">Analogy — Universal Remote</div>
+            <h3>One Remote, Three Devices</h3>
+            <p>TV + Cable + Sound System — three devices, one remote. Our <strong>unified frontend</strong> is that remote for three university systems.</p>
+          </div>
+          <div class="card bv-gold a4">
+            <div class="badge bx-gd">Analogy — School ID</div>
+            <h3>One ID, Multiple Departments</h3>
+            <p>Library, registrar, canteen — <strong>one card, works everywhere.</strong> Integration does this digitally.</p>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="a2" style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:12px;padding:13px 15px;">
+            <div style="font-size:.66rem;font-weight:700;color:var(--rd);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;">✗ Before</div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div style="background:white;border-radius:6px;padding:7px 10px;font-size:.77rem;color:#7a1a1a;"><strong>Admission</strong> — Data stays here only</div>
+              <div style="background:white;border-radius:6px;padding:7px 10px;font-size:.77rem;color:#7a1a1a;"><strong>Registration</strong> — Re-enter data manually</div>
+              <div style="background:white;border-radius:6px;padding:7px 10px;font-size:.77rem;color:#7a1a1a;"><strong>Scheduling</strong> — No link to admissions</div>
+            </div>
+          </div>
+          <div class="a3" style="background:#d1fae5;border:1.5px solid #6ee7b7;border-radius:12px;padding:13px 15px;">
+            <div style="font-size:.66rem;font-weight:700;color:var(--gr);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;">✓ After</div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div style="background:white;border-radius:6px;padding:7px 10px;font-size:.77rem;color:#064e3b;"><strong>Admission</strong> — Approved → data sent automatically</div>
+              <div style="background:white;border-radius:6px;padding:7px 10px;font-size:.77rem;color:#064e3b;"><strong>Registration</strong> — Account auto-created</div>
+              <div style="background:white;border-radius:6px;padding:7px 10px;font-size:.77rem;color:#064e3b;"><strong>Scheduling</strong> — Sees enrolled students instantly</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S6 · KEY TERMS PART 1 -->
+<div class="slide" id="s6">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Key Terms 1/2</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">05 / Terms</div>
+      <div class="sec-num a1">05</div>
+      <div class="sec-title a2">Integration Vocabulary</div>
+      <div class="sec-sub a3">The tools we used to make systems talk to each other</div>
+      <div class="deco-num">05</div>
+    </div>
+    <div class="split-r">
+      <div class="stitle a0">Key Terms — Integration Concepts</div>
+      <div class="ssub a1">How systems communicate in our project</div>
+      <div class="hdiv a1"></div>
+      <div class="g2" style="flex:1;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="card bv-blue a2">
+            <div class="badge bx-bl">API</div>
+            <h3>Application Programming Interface</h3>
+            <p>Rules that let one software <strong>request data from another</strong>. Like a waiter — takes your order to the kitchen, brings back your food.</p>
+            <p style="margin-top:4px;font-size:.73rem;color:var(--mu);"><code>GET /student/status/123</code> → returns status</p>
+          </div>
+          <div class="card bv-blue a3">
+            <div class="badge bx-bl">Webhook</div>
+            <h3>Automatic Notification</h3>
+            <p>System A <strong>automatically notifies</strong> System B when something happens — no polling needed. Like a doorbell.</p>
+            <p style="margin-top:4px;font-size:.73rem;color:var(--mu);">Admission approves → Registration notified instantly</p>
+          </div>
+          <div class="card bv-blue a4">
+            <div class="badge bx-bl">REST API</div>
+            <h3>Standard API Format</h3>
+            <p>Uses HTTP verbs: <code>GET</code> read · <code>POST</code> create · <code>PUT</code> update · <code>DELETE</code> remove. All our systems use REST.</p>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="card bv-gold a2">
+            <div class="badge bx-gd">iFrame</div>
+            <h3>Website Inside a Website</h3>
+            <p>Embeds one site inside another. React loads Admission &amp; Registration as iFrames — users see <strong>one page</strong>, not three separate URLs.</p>
+          </div>
+          <div class="card bv-gold a3">
+            <div class="badge bx-gd">API Gateway</div>
+            <h3>Central Request Router</h3>
+            <p>Single entry point — React talks to the gateway, gateway forwards to the right backend. Our Node.js Express server.</p>
+          </div>
+          <div class="card bv-red a4">
+            <div class="badge bx-rd">CORS</div>
+            <h3>Cross-Origin Security Rule</h3>
+            <p>Browsers block cross-domain requests by default. React (port 3000) vs systems (port 80) = blocked — until we enabled CORS middleware.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S7 · KEY TERMS PART 2 -->
+<div class="slide" id="s7">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Key Terms 2/2</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">06 / Terms</div>
+      <div class="sec-num a1">06</div>
+      <div class="sec-title a2">Technologies Used</div>
+      <div class="sec-sub a3">Frameworks, databases &amp; security concepts</div>
+      <div class="deco-num">06</div>
+    </div>
+    <div class="split-r">
+      <div class="stitle a0">Key Terms — Technologies &amp; Patterns</div>
+      <div class="ssub a1">The actual tools each system was built with</div>
+      <div class="hdiv a1"></div>
+      <div class="g2" style="flex:1;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="card bv-blue a2">
+            <div class="badge bx-bl">Laravel</div>
+            <h3>PHP Web Framework</h3>
+            <p>Builds web apps in PHP with routing, DB, and auth built-in. Used by <strong>Admission</strong> and <strong>Registration</strong> (Laravel 12).</p>
+          </div>
+          <div class="card bv-blue a3">
+            <div class="badge bx-bl">React</div>
+            <h3>JavaScript UI Library</h3>
+            <p>Builds interactive interfaces. Our <strong>unified frontend dashboard</strong> — the first page all users see (React 19).</p>
+          </div>
+          <div class="card bv-blue a4">
+            <div class="badge bx-bl">MySQL / PostgreSQL</div>
+            <h3>Relational Databases</h3>
+            <p><strong>MySQL</strong> → <code>university_db</code> (Admission + Registration). <strong>PostgreSQL</strong> → Scheduling cloud deployment via Neon.</p>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="card bv-gold a2">
+            <div class="badge bx-gd">MVC</div>
+            <h3>Model – View – Controller</h3>
+            <p>Code in 3 layers: <strong>Model</strong> (data) · <strong>View</strong> (UI) · <strong>Controller</strong> (logic). Both Laravel systems follow this strictly.</p>
+          </div>
+          <div class="card bv-gold a3">
+            <div class="badge bx-gd">Authentication &amp; Session</div>
+            <h3>Login &amp; Stay Logged In</h3>
+            <p><strong>Auth</strong> = who are you? <strong>Session</strong> = remember you're logged in. Each system has its own — key reason shared login is hard.</p>
+          </div>
+          <div class="card bv-gold a4">
+            <div class="badge bx-gd">X-API-Key</div>
+            <h3>API Security Token</h3>
+            <p>Secret key in HTTP headers proving the caller is authorized. Webhook from Admission requires it — Registration rejects without it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     S8 · TECH STACK
+════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Technology Stack</div>
+  </div>
+  <div class="lt" style="padding:26px 44px;">
+    <div class="stitle a0">Complete Technology Stack</div>
+    <div class="ssub a1">Every tool, framework, and database used across all five components of the project</div>
+    <div class="hdiv a1"></div>
+    <div class="a2" style="margin-bottom:14px;">
+      <table>
+        <thead>
+          <tr><th>System</th><th>Language</th><th>Framework</th><th>Database</th><th>Deployment</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge bx-nv" style="margin:0;">Admission</span></td>
+            <td>PHP 8.2</td><td style="color:var(--bl);font-weight:600;">Laravel 12</td>
+            <td>MySQL · <em style="color:var(--mu);">university_db</em></td>
+            <td>XAMPP / Apache</td>
+          </tr>
+          <tr>
+            <td><span class="badge bx-bl" style="margin:0;">Registration</span></td>
+            <td>PHP 8.2</td><td style="color:var(--bl);font-weight:600;">Laravel 12</td>
+            <td>MySQL · <em style="color:var(--mu);">university_db</em></td>
+            <td>XAMPP / Apache</td>
+          </tr>
+          <tr>
+            <td><span class="badge bx-or" style="margin:0;">Scheduling</span></td>
+            <td>PHP 8.0</td><td style="color:var(--or);font-weight:600;">Vanilla PHP</td>
+            <td>MySQL or PostgreSQL (Neon)</td>
+            <td>XAMPP or Vercel</td>
+          </tr>
+          <tr>
+            <td><span class="badge bx-gd" style="margin:0;">Frontend</span></td>
+            <td>JavaScript</td><td style="color:var(--bl);font-weight:600;">React 19</td>
+            <td>None (UI only)</td>
+            <td>Node.js · port 3000</td>
+          </tr>
+          <tr>
+            <td><span class="badge bx-rd" style="margin:0;">API Gateway</span></td>
+            <td>JavaScript</td><td style="color:var(--bl);font-weight:600;">Express 5 (Node.js)</td>
+            <td>None (proxy only)</td>
+            <td>Node.js · port 5000</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="g3 a3" style="gap:12px;">
+      <div class="card">
+        <h3>Frontend</h3>
+        <ul class="il">
+          <li><span class="lb">Tailwind CSS</span>Styling</li>
+          <li><span class="lb">Axios</span>HTTP client</li>
+          <li><span class="lb">React Router v7</span>Navigation</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Backend / DB</h3>
+        <ul class="il">
+          <li><span class="lb">Eloquent ORM</span>Laravel DB layer</li>
+          <li><span class="lb">PDO</span>PHP DB driver</li>
+          <li><span class="lb">DomPDF</span>PDF generation</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Dev Environment</h3>
+        <ul class="il">
+          <li><span class="lb">XAMPP</span>Local server</li>
+          <li><span class="lb">Composer / npm</span>Package managers</li>
+          <li><span class="lb">Neon</span>Cloud PostgreSQL</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     S9 · ARCHITECTURE
+════════════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Architecture</div>
+  </div>
+  <div class="lt" style="padding:26px 44px;">
+    <div class="stitle a0">How We Connected the Three Systems</div>
+    <div class="ssub a1">The actual implementation architecture — from user to database</div>
+    <div class="hdiv a1"></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center;" class="as">
+
+      <!-- User -->
+      <div style="text-align:center;">
+        <div style="display:inline-block;background:var(--n1);color:var(--g1);font-weight:700;font-size:.82rem;padding:9px 48px;border-radius:8px;border:2px solid var(--g1);letter-spacing:.06em;">USER — Admin / Student / Instructor</div>
+      </div>
+      <div style="text-align:center;color:var(--n1);font-weight:900;font-size:.9rem;">↓</div>
+
+      <!-- React -->
+      <div style="text-align:center;">
+        <div style="display:inline-block;background:var(--w0);border:2.5px solid var(--g1);border-radius:10px;padding:9px 44px;box-shadow:0 4px 16px rgba(8,13,34,.1);">
+          <div style="font-weight:800;font-size:.84rem;color:var(--n1);">React 19 Frontend — localhost:3000</div>
+          <div style="font-size:.7rem;color:var(--mu);margin-top:2px;">Role Selection · Dashboard · iFrame Portal Loader</div>
+        </div>
+      </div>
+
+      <!-- Arrows to systems -->
+      <div style="display:flex;justify-content:center;">
+        <div style="width:33%;text-align:center;font-size:.7rem;color:var(--bl);font-weight:700;">↙ iFrame</div>
+        <div style="width:33%;text-align:center;font-size:.7rem;color:var(--gr);font-weight:700;">↓ iFrame</div>
+        <div style="width:33%;text-align:center;font-size:.7rem;color:var(--or);font-weight:700;">↘ iFrame</div>
+      </div>
+
+      <!-- Three Systems -->
+      <div class="g3" style="gap:14px;">
+        <div class="card bv-blue" style="text-align:center;">
+          <div class="badge bx-nv">PHP + Laravel 12</div>
+          <div style="font-weight:800;color:var(--n1);margin-bottom:4px;">Admission System</div>
+          <div style="font-size:.68rem;font-family:Consolas,monospace;color:var(--bl);">localhost/admission_system</div>
+          <div style="margin-top:8px;font-size:.72rem;color:var(--mu);">Apply · Track · Approve</div>
+        </div>
+        <div class="card bv-grn" style="text-align:center;">
+          <div class="badge bx-nv">PHP + Laravel 12</div>
+          <div style="font-weight:800;color:var(--n1);margin-bottom:4px;">Registration System</div>
+          <div style="font-size:.68rem;font-family:Consolas,monospace;color:var(--bl);">localhost/registration_system</div>
+          <div style="margin-top:8px;font-size:.72rem;color:var(--mu);">Enroll · Grades · Subjects</div>
+        </div>
+        <div class="card bv-org" style="text-align:center;">
+          <div class="badge bx-nv">Vanilla PHP</div>
+          <div style="font-weight:800;color:var(--n1);margin-bottom:4px;">Scheduling System</div>
+          <div style="font-size:.68rem;font-family:Consolas,monospace;color:var(--bl);">localhost/scheduling_system</div>
+          <div style="margin-top:8px;font-size:.72rem;color:var(--mu);">Classes · Rooms · Timetable</div>
+        </div>
+      </div>
+
+      <!-- Webhook label -->
+      <div style="text-align:center;font-size:.72rem;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span style="color:var(--bl);font-weight:700;">Admission</span>
+        <span style="color:var(--mu);">── Webhook HTTP POST + X-API-Key ──▶</span>
+        <span style="color:var(--gr);font-weight:700;">Registration</span>
+        <span style="color:var(--mu);margin-left:16px;">⚠</span>
+        <span style="color:var(--or);font-size:.68rem;">Scheduling: separate DB, no auto-sync yet</span>
+      </div>
+
+      <!-- Databases -->
+      <div style="display:flex;justify-content:center;gap:20px;">
+        <div style="background:var(--w0);border:2px solid var(--bl);border-radius:8px;padding:8px 24px;text-align:center;">
+          <div style="font-size:.78rem;font-weight:700;color:var(--n1);">MySQL: university_db</div>
+          <div style="font-size:.64rem;color:var(--mu);">Shared by Admission + Registration</div>
+        </div>
+        <div style="background:var(--w0);border:2px solid var(--or);border-radius:8px;padding:8px 24px;text-align:center;">
+          <div style="font-size:.78rem;font-weight:700;color:var(--n1);">MySQL / PostgreSQL: unified_scheduling</div>
+          <div style="font-size:.64rem;color:var(--mu);">Scheduling only — separate database</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S10 · API ENDPOINTS -->
+<div class="slide" id="s10">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">APIs &amp; Endpoints</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">08 / APIs</div>
+      <div class="sec-num a1">08</div>
+      <div class="sec-title a2">APIs &amp; Endpoints</div>
+      <div class="sec-sub a3">The URLs that let systems communicate</div>
+      <div class="deco-num">08</div>
+    </div>
+    <div class="split-r">
+      <div class="stitle a0">API Endpoints We Built</div>
+      <div class="ssub a1">Send a request to a URL → get a response</div>
+      <div class="hdiv a1"></div>
+      <div class="g2" style="flex:1;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="a2">
+            <div style="font-size:.66rem;font-weight:700;color:var(--n1);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;">Admission</div>
+            <div class="pre" style="font-size:.7rem;">
+<span class="ck">POST</span> <span class="cs">/student/submit</span>         <span class="cc">apply</span>
+<span class="ck">GET</span>  <span class="cs">/student/status/{id}</span>    <span class="cc">check status</span>
+<span class="ck">POST</span> <span class="cs">/student/check-duplicate</span><span class="cc">no duplicates</span>
+<span class="ck">POST</span> <span class="cs">/admin/application/{id}/approve</span>
+            </div>
+          </div>
+          <div class="a3">
+            <div style="font-size:.66rem;font-weight:700;color:var(--or);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;">Scheduling</div>
+            <div class="pre" style="font-size:.7rem;">
+<span class="ck">GET</span> <span class="cs">api.php?action=dashboard</span>
+<span class="ck">GET</span> <span class="cs">api.php?action=classes</span>
+<span class="ck">GET</span> <span class="cs">api.php?action=student_schedule</span>
+<span class="ck">GET</span> <span class="cs">api.php?action=student_info</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="a2">
+            <div style="font-size:.66rem;font-weight:700;color:var(--gr);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;">The Webhook (Admission → Registration)</div>
+            <div class="pre" style="font-size:.69rem;">
+<span class="ck">POST</span> <span class="cs">/api/admission/webhook</span>
+<span class="cp">Header:</span> X-API-Key: [secret]
+<span class="cp">Body (JSON):</span>
+{
+  <span class="cs">"student_number"</span>: <span class="cs">"2026-00001"</span>,
+  <span class="cs">"name"</span>: <span class="cs">"Juan Dela Cruz"</span>,
+  <span class="cs">"course"</span>: <span class="cs">"BSIT"</span>,
+  <span class="cs">"year_level"</span>: <span class="cp">1</span>
+}
+<span class="cc">→ auto-creates user account + student record</span>
+            </div>
+          </div>
+          <div class="card bv-gold a3">
+            <div class="badge bx-gd">JSON</div>
+            <h3>The Data Format APIs Use</h3>
+            <p>Text-based, human-readable format. APIs package and send data as JSON — both machines and humans can read it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     S11 · STUDENT JOURNEY
+════════════════════════════════════════ -->
+<div class="slide" id="s11">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Data Flow</div>
+  </div>
+  <div class="lt" style="padding:26px 44px;">
+    <div class="stitle a0">The Student's Journey Across All Three Systems</div>
+    <div class="ssub a1">How one student's data flows from initial application all the way to class schedule</div>
+    <div class="hdiv a1"></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:7px;justify-content:center;">
+      <div class="fstep a1" style="--leftcol:var(--n1);">
+        <div class="fstep-n">1</div>
+        <div>
+          <h4>Student Submits Application</h4>
+          <p>Fills admission form, uploads documents. Stored in <code>student_applications</code> with status = <em>Pending</em>.</p>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--n1);font-weight:700;font-size:.82rem;line-height:1;">↓</div>
+      <div class="fstep a2" style="--leftcol:var(--g1);">
+        <div class="fstep-n">2</div>
+        <div>
+          <h4>Admin Reviews and Approves</h4>
+          <p>Admin clicks <em>Approve</em> in the Admission dashboard. Status → <em>Approved</em>. Webhook fires to notify Registration.</p>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:.72rem;font-weight:700;color:var(--bl);">↓ HTTP POST · X-API-Key</div>
+      <div class="fstep a3" style="--leftcol:var(--bl);">
+        <div class="fstep-n">3</div>
+        <div>
+          <h4>Registration Receives Webhook → Creates Account</h4>
+          <p>Validates X-API-Key. Auto-creates <code>users</code> account + <code>reg_students</code> record with a temporary password.</p>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--n1);font-weight:700;font-size:.82rem;line-height:1;">↓</div>
+      <div class="fstep a4" style="--leftcol:var(--gr);">
+        <div class="fstep-n">4</div>
+        <div>
+          <h4>Student Logs In &amp; Enrolls</h4>
+          <p>Uses student number + temp password via unified frontend. Pre-enlists subjects, views grades.</p>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:.72rem;font-weight:700;color:var(--or);">↓ manual step (current gap)</div>
+      <div class="fstep a5" style="--leftcol:var(--or);">
+        <div class="fstep-n">5</div>
+        <div>
+          <h4>Admin Manually Sets Up Schedules</h4>
+          <p>Scheduling uses a separate DB — not auto-synced yet. Admin assigns sections, rooms, and class schedules manually.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     S12 · INTEGRATION CHALLENGES
+════════════════════════════════════════ -->
+<div class="slide" id="s12">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Integration Challenges</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">10 / Challenges</div>
+      <div class="sec-num a1">10</div>
+      <div class="sec-title a2">Why Integration Is Hard</div>
+      <div class="sec-sub a3">The real technical barriers we encountered when connecting three independently built systems</div>
+      <div class="deco-num">10</div>
+    </div>
+    <div class="split-r scroll">
+      <div class="stitle a0">Technical Challenges</div>
+      <div class="ssub a1">Each challenge required a deliberate design decision to solve</div>
+      <div class="hdiv a1"></div>
+      <div style="display:flex;flex-direction:column;gap:0;" class="a2">
+        <div class="chal">
+          <div class="chal-n">1</div>
+          <div>
+            <h4><span style="color:var(--rd);">Different Tech Stacks</span></h4>
+            <p>Laravel (PHP) · Vanilla PHP · React (JS). Different routing, auth, and session formats. Every boundary needs translation.</p>
+          </div>
+        </div>
+        <div class="chal">
+          <div class="chal-n">2</div>
+          <div>
+            <h4><span style="color:var(--rd);">Three Separate Auth Systems</span></h4>
+            <p>Admission: custom guard · Registration: Laravel Roles · Scheduling: custom session. Logged into one = stranger to the others. True SSO requires rewriting all three.</p>
+          </div>
+        </div>
+        <div class="chal">
+          <div class="chal-n">3</div>
+          <div>
+            <h4><span style="color:var(--or);">CORS Restrictions</span></h4>
+            <p>Browsers block cross-domain requests. React (3000) vs systems (80) = blocked by default. Needed CORS middleware on each Laravel backend.</p>
+          </div>
+        </div>
+        <div class="chal">
+          <div class="chal-n">4</div>
+          <div>
+            <h4><span style="color:var(--or);">iFrame Security (X-Frame-Options)</span></h4>
+            <p>Browsers block sites from loading inside iFrames by default. Required <code>AllowFraming</code> middleware — a deliberate security trade-off.</p>
+          </div>
+        </div>
+        <div class="chal">
+          <div class="chal-n">5</div>
+          <div>
+            <h4><span style="color:var(--rd);">No Shared Student Identity</span></h4>
+            <p>Admission: <code>gmail_account</code> · Registration: <code>student_number</code> · Scheduling: <code>user_id</code>. No universal key links all three systems.</p>
+          </div>
+        </div>
+        <div class="chal">
+          <div class="chal-n">6</div>
+          <div>
+            <h4><span style="color:var(--bl);">Webhook Reliability</span></h4>
+            <p>No guarantee the webhook succeeds. If Registration is down, data is lost. Production needs a message queue (Redis / RabbitMQ) to retry failures.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     S13 · DATABASE CHALLENGE
+════════════════════════════════════════ -->
+<div class="slide" id="s13">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Database Challenge</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">11 / DB</div>
+      <div class="sec-num a1">11</div>
+      <div class="sec-title a2">Why Centralizing the Database Is Difficult</div>
+      <div class="sec-sub a3">The proposal called for a centralized database — here's why that's harder than it sounds</div>
+      <div class="deco-num">11</div>
+    </div>
+    <div class="split-r">
+      <div class="stitle a0">The Centralized Database Problem</div>
+      <div class="ssub a1">Five specific technical barriers — and our pragmatic solution</div>
+      <div class="hdiv a1"></div>
+      <div class="g2" style="flex:1;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div class="card bv-red a2">
+            <div class="badge bx-rd">Problem 1</div>
+            <h3>Table Name Conflicts</h3>
+            <p>All 3 systems have a <code>users</code> table — can't coexist with the same name. Fix: prefixes → <code>adm_</code> · <code>reg_</code> · <code>sch_</code>.</p>
+          </div>
+          <div class="card bv-red a3">
+            <div class="badge bx-rd">Problem 2</div>
+            <h3>Different Database Engines</h3>
+            <p>MySQL (Admission + Registration) vs PostgreSQL (Scheduling cloud). Different SQL syntax — can't force both onto one engine.</p>
+          </div>
+          <div class="card bv-org a4">
+            <div class="badge bx-or">Problem 3</div>
+            <h3>Live Migration Risk</h3>
+            <p>Moving live data risks <strong>data loss, downtime, broken references</strong>. Needs a full maintenance window — not feasible mid-semester.</p>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div class="card bv-org a2">
+            <div class="badge bx-or">Problem 4</div>
+            <h3>Incompatible Data Models</h3>
+            <p>Admission: <code>gmail_account</code> · Registration: <code>email</code> · Scheduling: numeric <code>user_id</code>. Merging needs a new universal model + full rewrite.</p>
+          </div>
+          <div class="card bv-org a3">
+            <div class="badge bx-or">Problem 5</div>
+            <h3>Multi-Team Ownership</h3>
+            <p>3 teams, 3 codebases. Shared DB = shared failure point. One bad query corrupts everyone's data.</p>
+          </div>
+          <div class="card card-dk a4">
+            <div class="badge bx-nv">Our Solution</div>
+            <h3>Partial Sharing + Prefixes</h3>
+            <p>Admission &amp; Registration share <code style="color:var(--g2);background:rgba(255,255,255,.1);">university_db</code> with prefixes. Scheduling keeps its own DB. Practical centralization without a full rewrite.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     S14 · ACHIEVEMENTS
+════════════════════════════════════════ -->
+<div class="slide" id="s14">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>SUSA</em> · Partido State University</div></div>
+    <div class="bar-r">Results</div>
+  </div>
+  <div class="split">
+    <div class="split-l">
+      <div class="sec-tag a0">12 / Results</div>
+      <div class="sec-num a1">12</div>
+      <div class="sec-title a2">What We Achieved</div>
+      <div class="sec-sub a3">Deliverables, working features, and known gaps with explanations</div>
+      <div class="deco-num">12</div>
+    </div>
+    <div class="split-r">
+      <div class="stitle a0">Project Deliverables &amp; Current State</div>
+      <div class="ssub a1">What is working now — and what is the next step</div>
+      <div class="hdiv a1"></div>
+      <div class="g2" style="flex:1;gap:12px;">
+        <div class="a1">
+          <div style="font-size:.68rem;font-weight:700;color:var(--gr);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">✓ What Works</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;gap:9px;background:var(--w0);border:1.5px solid #b8f0d4;border-left:4px solid var(--gr);border-radius:0 10px 10px 0;padding:9px 12px;align-items:flex-start;">
+              <span class="dot dok" style="margin-top:3px;"></span>
+              <div><strong style="font-size:.82rem;">Unified Frontend Dashboard</strong><br/><span style="font-size:.75rem;color:#3a4870;">React at localhost:3000 — role-based routing for Admin, Student, Instructor.</span></div>
+            </div>
+            <div style="display:flex;gap:9px;background:var(--w0);border:1.5px solid #b8f0d4;border-left:4px solid var(--gr);border-radius:0 10px 10px 0;padding:9px 12px;align-items:flex-start;">
+              <span class="dot dok" style="margin-top:3px;"></span>
+              <div><strong style="font-size:.82rem;">iFrame Integration</strong><br/><span style="font-size:.75rem;color:#3a4870;">All 3 systems in one URL — no manual navigation to 3 addresses.</span></div>
+            </div>
+            <div style="display:flex;gap:9px;background:var(--w0);border:1.5px solid #b8f0d4;border-left:4px solid var(--gr);border-radius:0 10px 10px 0;padding:9px 12px;align-items:flex-start;">
+              <span class="dot dok" style="margin-top:3px;"></span>
+              <div><strong style="font-size:.82rem;">Partial Database Centralization</strong><br/><span style="font-size:.75rem;color:#3a4870;">Admission + Registration share <code>university_db</code> — eliminates duplicate data entry.</span></div>
+            </div>
+            <div style="display:flex;gap:9px;background:var(--w0);border:1.5px solid #b8f0d4;border-left:4px solid var(--gr);border-radius:0 10px 10px 0;padding:9px 12px;align-items:flex-start;">
+              <span class="dot dok" style="margin-top:3px;"></span>
+              <div><strong style="font-size:.82rem;">Secured Webhook Endpoint</strong><br/><span style="font-size:.75rem;color:#3a4870;">Registration's webhook is live with X-API-Key validation — ready to receive.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="a2">
+          <div style="font-size:.68rem;font-weight:700;color:var(--or);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">⚠ Known Gaps</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;gap:9px;background:var(--w0);border:1.5px solid #fddcb5;border-left:4px solid var(--or);border-radius:0 10px 10px 0;padding:9px 12px;align-items:flex-start;">
+              <span class="dot dwn" style="margin-top:3px;"></span>
+              <div><strong style="font-size:.82rem;">Webhook Not Yet Triggered</strong><br/><span style="font-size:.75rem;color:#3a4870;">Receiver is ready. <code>AdminController.php</code> needs one more method call on approve.</span></div>
+            </div>
+            <div style="display:flex;gap:9px;background:var(--w0);border:1.5px solid #fddcb5;border-left:4px solid var(--or);border-radius:0 10px 10px 0;padding:9px 12px;align-items:flex-start;">
+              <span class="dot dwn" style="margin-top:3px;"></span>
+              <div><strong style="font-size:.82rem;">Scheduling Not Auto-Synced</strong><br/><span style="font-size:.75rem;color:#3a4870;">Separate DB — needs a second webhook or full migration.</span></div>
+            </div>
+            <div style="display:flex;gap:9px;background:var(--w0);border:1.5px solid #fddcb5;border-left:4px solid var(--or);border-radius:0 10px 10px 0;padding:9px 12px;align-items:flex-start;">
+              <span class="dot dwn" style="margin-top:3px;"></span>
+              <div><strong style="font-size:.82rem;">No True SSO</strong><br/><span style="font-size:.75rem;color:#3a4870;">Login per iFrame. Full SSO needs JWT + shared session store.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     S15 · CLOSING
+════════════════════════════════════════ -->
+<div class="slide" id="s15">
+  <div class="bar">
+    <div class="bar-l"><div class="bar-seal">P<br/>S<br/>U</div><div class="bar-name"><em>PARTIDO STATE UNIVERSITY</em> · Goa, Camarines Sur</div></div>
+    <div class="bar-r">SUSA 1.0.0</div>
+  </div>
+  <div class="dk" style="align-items:center;justify-content:center;padding:40px 60px;flex:1;">
+    <div class="close-inner">
+      <div class="close-eye a0">SIA 1 Final Project · Partido State University</div>
+      <div class="close-h a1">Thank You.<br/><span>Questions?</span></div>
+      <div class="close-p a2">
+        We integrated three independent university management systems into one unified platform — demonstrating real-world API design, webhook communication, database architecture, and the genuine engineering challenges of cross-system integration.
+      </div>
+      <div class="close-pills a3">
+        <span class="cpill" style="color:rgba(255,255,255,.8);">Admission System</span>
+        <span class="cpill" style="color:rgba(255,255,255,.8);">Registration System</span>
+        <span class="cpill" style="color:rgba(255,255,255,.8);">Scheduling System</span>
+        <span class="cpill" style="color:rgba(255,255,255,.8);">React Frontend</span>
+        <span class="cpill" style="color:rgba(255,255,255,.8);">API Gateway</span>
+      </div>
+      <div class="close-grid a4">
+        <div><strong>Frontend</strong>React 19 + Tailwind</div>
+        <div><strong>Backend</strong>Laravel 12 + PHP</div>
+        <div><strong>Database</strong>MySQL + PostgreSQL</div>
+        <div><strong>Gateway</strong>Node.js Express 5</div>
+        <div><strong>Integration</strong>Webhooks + iFrames</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- PROGRESS -->
+<div class="pgbar"><div class="pgfill" id="pgfill"></div></div>
+<div class="dots" id="dots"></div>
+<div class="pgcount" id="pgcount"></div>
+<div class="pghint">← → Space · Click</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const total  = slides.length;
+  let cur = 0, busy = false;
+
+  /* build dots */
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot-nav' + (i === 0 ? ' on' : '');
+    d.addEventListener('click', e => { e.stopPropagation(); go(i); });
+    dotsEl.appendChild(d);
+  });
+
+  function updateUI() {
+    document.getElementById('pgfill').style.width = (cur / (total - 1) * 100) + '%';
+    document.getElementById('pgcount').textContent = (cur + 1) + ' / ' + total;
+    dotsEl.querySelectorAll('.dot-nav').forEach((d, i) => d.classList.toggle('on', i === cur));
+  }
+
+  function go(n) {
+    if (busy || n === cur || n < 0 || n >= total) return;
+    busy = true;
+
+    const dir = n > cur ? 1 : -1;
+    const prev = slides[cur];
+    const next = slides[n];
+
+    /* direction vars for animation */
+    prev.style.setProperty('--leave', dir > 0 ? '-55px' : '55px');
+    next.style.setProperty('--enter', dir > 0 ?  '55px' : '-55px');
+
+    prev.classList.add('leaving');
+    prev.classList.remove('active');
+
+    cur = n;
+    next.classList.add('active');
+
+    updateUI();
+
+    setTimeout(() => {
+      prev.classList.remove('leaving');
+      busy = false;
+    }, 220);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+    if (['ArrowLeft','ArrowUp'].includes(e.key))         { e.preventDefault(); go(cur - 1); }
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End')  go(total - 1);
+  });
+
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+  });
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('.scroll') || e.target.closest('.dot-nav')) return;
+    go(cur + (e.clientX > window.innerWidth / 2 ? 1 : -1));
+  });
+
+  updateUI();
+</script>
+</body>
+</html>

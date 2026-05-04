@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   HiChevronDown,
@@ -109,10 +109,6 @@ export default function RoleSelection() {
   const [instructorOpen, setInstructorOpen] = useState(false);
   const [studentOpen,    setStudentOpen]    = useState(false);
 
-  useEffect(() => {
-    fetch(`${REGISTRATION_URL}/auto-logout`, { credentials: "include" }).catch(() => {});
-    fetch(`${ADMISSION_URL}/auto-logout`, { credentials: "include" }).catch(() => {});
-  }, []);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
@@ -177,7 +173,7 @@ export default function RoleSelection() {
               <SubBtn
                 icon={HiCalendar}
                 label="Scheduling System"
-                onClick={() => { window.location.href = `${SCHEDULING_URL}/administrator_login.html?v=${Date.now()}`; }}
+                onClick={() => { window.location.href = `${SCHEDULING_URL}/administrator_login.html`; }}
               />
             </ExpandableBtn>
 
@@ -195,7 +191,7 @@ export default function RoleSelection() {
               <SubBtn
                 icon={HiCalendar}
                 label="Scheduling System"
-                onClick={() => { window.location.href = `${SCHEDULING_URL}/instructor_login.html?v=${Date.now()}`; }}
+                onClick={() => { window.location.href = `${SCHEDULING_URL}/instructor_login.html`; }}
               />
             </ExpandableBtn>
 
@@ -213,7 +209,7 @@ export default function RoleSelection() {
               <SubBtn
                 icon={HiCalendar}
                 label="Scheduling System"
-                onClick={() => { window.location.href = `${SCHEDULING_URL}/student_login.html?v=${Date.now()}`; }}
+                onClick={() => { window.location.href = `${SCHEDULING_URL}/student_login.html`; }}
               />
             </ExpandableBtn>
 

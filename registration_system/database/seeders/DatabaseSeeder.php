@@ -16,11 +16,14 @@ class DatabaseSeeder extends Seeder
         $this->call(UniversityDataSeeder::class);
 
         // Create admin user
-        User::firstOrCreate(['email' => 'admin@university.com'], [
-            'name'     => 'Admin User',
-            'password' => Hash::make('admin123'),
+        User::updateOrCreate(['email' => 'admin@parsu.edu.ph'], [
+            'name'     => 'Administrator',
+            'password' => Hash::make('@admin#2026'),
             'role'     => 'admin',
         ]);
+
+        // Remove old admin credential entry if it exists
+        User::where('email', 'admin@university.com')->delete();
 
         // Create teacher user
         $teacherUser = User::firstOrCreate(['email' => 'teacher@university.com'], [

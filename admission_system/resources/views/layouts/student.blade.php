@@ -62,5 +62,10 @@
     </footer>
 
     @yield('extra_js')
+    <script>
+    if (window !== window.parent) {
+        window.parent.postMessage({ action: 'iframe-nav', url: window.location.href, status: 200 }, '*');
+    }
+    </script>
 </body>
 </html>

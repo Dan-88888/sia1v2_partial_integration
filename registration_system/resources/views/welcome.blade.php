@@ -59,7 +59,7 @@
             </div>
             <div class="login-field">
               <label for="password">Password:</label>
-              <input type="password" id="password" name="password" required autocomplete="new-password" />
+              <input type="password" id="password" name="password" required autocomplete="current-password" />
             </div>
           </form>
         </div>
@@ -82,12 +82,18 @@
 
         {{-- Admin Credentials Hint --}}
         @if(!$filteredRole || $filteredRole === 'admin')
-        <div style="margin-top:16px; padding:12px 16px; background:#f0f4ff; border:1px solid #c7d2fe; border-radius:10px; text-align:center;">
-          <p style="font-size:0.78rem; color:#3730a3; margin:0; line-height:1.7;">
-            <strong>Administrator Login</strong><br>
-            Email: <code style="background:#e0e7ff; padding:1px 5px; border-radius:4px;">admin@parsu.edu.ph</code><br>
-            Password: <code style="background:#e0e7ff; padding:1px 5px; border-radius:4px;">Admin@123</code>
-          </p>
+        <div style="margin-top:12px; padding:8px; background-color:#eef2ff; border:1.5px solid #a5b4fc; border-radius:8px; text-align:center; max-width:260px; margin-left:auto; margin-right:auto;">
+          <p style="font-size:11px; font-weight:bold; margin:0 0 1px 0; color:#000035;">Demo Credentials:</p>
+          <div style="font-size:11px; display:inline-flex; flex-direction:column; align-items:flex-start; gap:2px;">
+            <div style="display:flex; gap:4px;">
+              <span style="width:56px; text-align:right; font-weight:500; color:#000035;">Email:</span>
+              <span style="color:#000000; white-space:nowrap;">admin@parsu.edu.ph</span>
+            </div>
+            <div style="display:flex; gap:4px;">
+              <span style="width:56px; text-align:right; font-weight:500; color:#000035;">Password:</span>
+              <span style="color:#000000; white-space:nowrap;">@admin#2026</span>
+            </div>
+          </div>
         </div>
         @endif
 
@@ -104,9 +110,10 @@
         <div style="margin-top:16px; padding:12px 16px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; text-align:center;">
           <p style="font-size:0.78rem; color:#92400e; margin:0; line-height:1.7;">
             <i class="fas fa-info-circle"></i>
-            <strong> New here?</strong><br>
-            Click <strong>"Apply as New Student"</strong> below to register.<br>
-            Your login credentials will be provided upon approval.
+            <strong> Approved applicants:</strong><br>
+            Use your <strong>university email</strong> (<code style="font-size:0.75rem;">*.pbox@parsu.edu.ph</code>) and the<br>
+            <strong>temporary password</strong> provided after your application is approved.<br>
+            Track your application status using your tracking number to get your credentials.
           </p>
         </div>
         @endif
@@ -368,7 +375,8 @@
                   </div>
                   <div>
                     <div style="font-size:0.8rem; color:#9a3412; margin-bottom:2px;">Login Password:</div>
-                    <div style="font-size:1.1rem; color:var(--navy); font-weight:700;">${data.temp_password || 'Pending'}</div>
+                    <div style="font-size:1.1rem; color:var(--navy); font-weight:700;">${data.temp_password || 'Will be provided upon approval'}</div>
+                    ${!data.temp_password ? '<p style="font-size:0.72rem; color:#9a3412; margin:4px 0 0 0; font-style:italic; font-family:sans-serif;">Use your tracking number above to check your application status and retrieve your login credentials after approval.</p>' : ''}
                   </div>
                 </div>
               </div>

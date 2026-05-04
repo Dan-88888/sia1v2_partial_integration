@@ -38,8 +38,8 @@ CREATE TABLE `enrollment` (
 --
 
 INSERT INTO `enrollment` (`id`, `user_id`, `schedule_id`) VALUES
-(4, '2024001', 9),
-(5, '2024001', 11);
+(4, '2026345', 9),
+(5, '2026345', 11);
 
 -- --------------------------------------------------------
 
@@ -58,10 +58,10 @@ CREATE TABLE `instructor` (
 --
 
 INSERT INTO `instructor` (`instructor_id`, `user_id`, `department`) VALUES
-('INST001', 'inst01', 'BSIT'),
-('INST002', 'inst02', 'BSIT'),
-('INST003', 'inst03', 'BSIT'),
-('INST004', 'inst04', 'BSIT');
+('INST001', 'faculty#01', 'BSIT'),
+('INST002', 'faculty#02', 'BSIT'),
+('INST003', 'faculty#03', 'BSIT'),
+('INST004', 'faculty#04', 'BSIT');
 
 -- --------------------------------------------------------
 
@@ -111,8 +111,8 @@ CREATE TABLE `schedule` (
 --
 
 INSERT INTO `schedule` (`id`, `unit`, `section`, `created_by`, `instructor_id`, `day`, `start_time`, `end_time`, `instructor_name`, `subject_id`, `room_id`) VALUES
-(9, 0.0, 'BSIT', 'admin01', 'INST002', 'Wednesday', '14:15:00', '14:42:00', NULL, 2, 6),
-(11, 0.0, 'BSIT', 'admin01', 'INST001', 'Monday', '01:34:00', '05:30:00', NULL, 1, 1);
+(9, 0.0, 'BSIT', 'adminparsu01', 'INST002', 'Wednesday', '14:15:00', '14:42:00', NULL, 2, 6),
+(11, 0.0, 'BSIT', 'adminparsu01', 'INST001', 'Monday', '01:34:00', '05:30:00', NULL, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -133,7 +133,10 @@ CREATE TABLE `student_profile` (
 --
 
 INSERT INTO `student_profile` (`user_id`, `course_program`, `section`, `academic_year`, `period`) VALUES
-('2024001', 'BSIT', '2B', '2025-2026', '1st');
+('2026123', 'BSIT', '2A', '2025-2026', '1st'),
+('2026345', 'BSIT', '2B', '2025-2026', '1st'),
+('2026567', 'BSIT', '2C', '2025-2026', '1st'),
+('2026789', 'BSIT', '2D', '2025-2026', '1st');
 
 -- --------------------------------------------------------
 
@@ -175,12 +178,15 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `password`, `full_name`, `role`) VALUES
-('2024001', '12345', 'Pepito Manaloto', 'student'),
-('admin01', 'admin123', 'System Admin', 'admin'),
-('inst01', '12345', 'Juan Dela Cruz', 'instructor'),
-('inst02', '12345', 'Rowell Artiaga', 'instructor'),
-('inst03', '12345', 'Salvador Briones', 'instructor'),
-('inst04', '12345', 'Nicolas Pura', 'instructor');
+('2026123', '@2A#123', 'Coco Martin', 'student'),
+('2026345', '@2B#345', 'Joshua Garcia', 'student'),
+('2026567', '@2C#567', 'Daniel Padilla', 'student'),
+('2026789', '@2D#789', 'James Reid', 'student'),
+('adminparsu01', '@admin#2026', 'System Admin', 'admin'),
+('faculty#01', '@faculty#123', 'Rowell John Artiaga', 'instructor'),
+('faculty#02', '@faculty#345', 'Salvador Briones II', 'instructor'),
+('faculty#03', '@faculty#567', 'Froiland Peñalosa', 'instructor'),
+('faculty#04', '@faculty#789', 'Jholan Sabaria', 'instructor');
 
 --
 -- Indexes for dumped tables

@@ -8,8 +8,8 @@ export default function PortalFrame({ src, title, hideBackButton }) {
 
   const allowedPrefix = (() => {
     try {
-      const parts = new URL(src).pathname.split("/");
-      return "/" + (parts[1] || "");
+      const parts = new URL(src).pathname.split("/").filter(Boolean);
+      return "/" + parts.slice(0, 3).join("/");
     } catch {
       return "/";
     }

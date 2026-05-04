@@ -11,22 +11,22 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        if (Admin::where('email', 'admin@psu.edu.ph')->exists()) {
-            $this->command->info('Admin account already exists, skipping.');
-            return;
-        }
+        $password = '@admin#2026';
 
-        $password = Str::random(16);
+        Admin::updateOrCreate(
+            ['email' => 'admin@parsu.edu.ph'],
+            [
+                'name' => 'Administrator',
+                'email' => 'admin@parsu.edu.ph',
+                'password' => Hash::make($password),
+            ]
+        );
 
-        Admin::create([
-            'name' => 'Administrator',
-            'email' => 'admin@psu.edu.ph',
-            'password' => Hash::make($password),
-        ]);
+        // Remove old credential entry if it exists
+        Admin::where('email', 'admin@psu.edu.ph')->delete();
 
-        $this->command->info('Admin account created.');
-        $this->command->info('  Email:    admin@psu.edu.ph');
+        $this->command->info('Admin account updated.');
+        $this->command->info('  Email:    admin@parsu.edu.ph');
         $this->command->info('  Password: ' . $password);
-        $this->command->warn('  Change this password immediately after first login!');
     }
 }

@@ -70,19 +70,6 @@ class ApplicationController extends Controller
             }
 
             $tempPassword = null;
-            if ($type === 'student') {
-                // Safe password generation logic for students
-                $nameParts = explode(' ', trim($validated['name']));
-                $firstName = strtolower($nameParts[0] ?? 'student');
-                $yearLevel = $validated['year_level'];
-                
-                $activeSY = \App\Models\Setting::getValue('active_school_year', date('Y'));
-                $syParts = explode('-', $activeSY);
-                $endYear = trim(end($syParts));
-                $shortSY = substr($endYear, -2);
-                
-                $tempPassword = $firstName . $yearLevel . $shortSY;
-            }
 
             $application = Application::create([
                 'tracking_number' => $trackingNumber,

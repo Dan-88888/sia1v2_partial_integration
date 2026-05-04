@@ -24,6 +24,14 @@
         .focus-ring-gold:focus {
             ring-color: #FFD700;
         }
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+        input[type="password"]::-webkit-credentials-auto-fill-button,
+        input[type="password"]::-webkit-strong-password-auto-fill-button {
+            display: none !important;
+        }
         .hero-pattern {
             background-color: #000035;
             background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23FFD700' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
@@ -119,7 +127,7 @@
                             </span>
                         </label>
                         <input type="email" name="email" value="{{ old('email') }}" required
-                               placeholder="admin@psu.edu.ph"
+                               placeholder="admin@parsu.edu.ph"
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition">
                     </div>
                     
@@ -132,9 +140,22 @@
                                 Password
                             </span>
                         </label>
-                        <input type="password" name="password" required
-                               placeholder="••••••••"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition">
+                        <div class="relative">
+                            <input type="password" name="password" id="password" required
+                                   placeholder="••••••••"
+                                   autocomplete="current-password"
+                                   class="w-full px-4 py-3 pr-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition">
+                            <button type="button" onclick="togglePassword()" tabindex="-1"
+                                    style="position:absolute; top:50%; right:10px; transform:translateY(-50%); background:none; border:none; padding:0; cursor:pointer; color:#9ca3af; line-height:0;">
+                                <svg id="eye-icon" style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                <svg id="eye-off-icon" style="width:20px;height:20px;display:none;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="flex items-center justify-between mb-6">
@@ -167,12 +188,18 @@
                     </div>
                     
                     @if(config('app.debug'))
-                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <p class="text-xs text-blue-700 text-center">
-                            <span class="font-bold">Demo Credentials:</span><br>
-                            Email: admin@university.edu<br>
-                            Password: Admin@PSU2024
-                        </p>
+                    <div class="mt-3 p-2 rounded-lg text-center mx-auto" style="background-color:#eef2ff; border: 1.5px solid #a5b4fc; max-width:260px;">
+                        <p class="text-xs font-bold" style="color:#000035 !important; margin:0 0 1px 0;">Demo Credentials:</p>
+                        <div style="font-size:11px;" class="inline-flex flex-col items-start gap-0.5">
+                            <div class="flex gap-1 w-fit">
+                                <span class="w-14 text-right font-medium" style="color:#000035 !important;">Email:</span>
+                                <span style="color:#000000 !important; white-space:nowrap;">admin@parsu.edu.ph</span>
+                            </div>
+                            <div class="flex gap-1 w-fit">
+                                <span class="w-14 text-right font-medium" style="color:#000035 !important;">Password:</span>
+                                <span style="color:#000000 !important; white-space:nowrap;">@admin#2026</span>
+                            </div>
+                        </div>
                     </div>
                     @endif
                 </div>
@@ -184,5 +211,24 @@
             <p>&copy; 2024 Partido State University. All rights reserved.</p>
         </div>
     </div>
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const eyeOn = document.getElementById('eye-icon');
+            const eyeOff = document.getElementById('eye-off-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeOn.style.display = 'none';
+                eyeOff.style.display = 'inline';
+            } else {
+                input.type = 'password';
+                eyeOn.style.display = 'inline';
+                eyeOff.style.display = 'none';
+            }
+        }
+        if (window !== window.parent) {
+            window.parent.postMessage({ action: 'iframe-nav', url: window.location.href, status: 200 }, '*');
+        }
+    </script>
 </body>
 </html>
